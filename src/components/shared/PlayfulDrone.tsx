@@ -95,21 +95,16 @@ function DroneGlider() {
     progress.current += (raw - progress.current) * 3 * dt;
     const p = progress.current;
 
-    // PARKED at right side start (p≈0) and right side bottom (p≈1)
+    // Stationary pads: launch at [3.5, 0.5, 2], landing at [3.5, -2.5, 2].
+    // Drone parks at the nearest pad — no blended glide path.
     const flightBlend = p < 0.08 ? 0 : p > 0.92 ? 0 : Math.sin((p - 0.08) / 0.84 * Math.PI);
     const fly = flightBlend;
     const park = 1 - fly;
 
-    // Start: right-mid (beside "Every Component" section). End: right-bottom (footer).
-    const parkStart = { x: 3.5, y: 0.5, z: 2 };
-    const parkEnd = { x: 3.5, y: -2.5, z: 2 };
+    const parkX = 3.5;
+    const parkY = p < 0.5 ? 0.5 : -2.5;
+    const parkZ = 2;
 
-    // Blend between start and end parked positions based on progress
-    const parkX = parkStart.x + (parkEnd.x - parkStart.x) * p;
-    const parkY = parkStart.y + (parkEnd.y - parkStart.y) * p;
-    const parkZ = parkStart.z + (parkEnd.z - parkStart.z) * p;
-
-    // Flying path with a bit of arc
     const flyX = -3 + p * 6;
     const flyY = 2 - p * 4;
     const flyZ = -2 + p * 3.5;
