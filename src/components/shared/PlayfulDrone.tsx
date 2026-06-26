@@ -33,16 +33,30 @@ function DroneGhost() {
     phase: Math.random() * 100,
     trickTime: 0,
     trickDone: false,
-    prevP: 0,
+    // speed & idle
+    velocity: 0,
+    idleTime: 0,
+    lastScrollTime: 0,
+    idleTrickPhase: 0,
+    inIdleTrick: false,
   });
 
   useEffect(() => {
-    const onScroll = () => { state.current.scroll = window.scrollY; };
+    const onScroll = () => {
+      const s = state.current;
+      const now = performance.now();
+      const dt = Math.max(16, now - s.lastScrollTime);
+      const dy = Math.abs(window.scrollY - s.scroll);
+      s.velocity = dy / dt * 16; // normalize to ~16ms frames
+      s.scroll = window.scrollY;
+      s.lastScrollTime = now;
+      s.idleTime = 0;
+      s.inIdleTrick = false;
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Smooth cubic ease for the victory roll
   function easeInOutCubic(t: number) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
@@ -69,8 +83,6 @@ function DroneGhost() {
       s.trickTime = 0;
       s.trickDone = false;
     }
-    s.prevP = p;
-
     const trickProgress = Math.min(1, s.trickTime / 3);
 
     // ---- position ----
@@ -92,32 +104,63 @@ function DroneGhost() {
       lz = Math.sin(p * Math.PI + s.phase * 0.01) * 1.5;
     }
 
-    ref.current.position.x += (lx - ref.current.position.x) * 3 * dt;
-    ref.current.position.y += (ly - ref.current.position.y) * 3 * dt;
-    ref.current.position.z += (lz - ref.current.position.z) * 2.5 * dt;
+    // ---- scroll velocity response ----
+    // Fast scrolling → more aggressive banking, looser spring
+    const vel = Math.min(s.velocity, 30);
+    const speedFactor = vel / 15;
+    const springPos = 3 - speedFactor * 0.8; // spring loosens at speed (min 2.2)
+    const bankMultiplier = 1 + speedFactor * 2; // more bank at speed
+
+    // ---- idle detection ----
+    s.idleTime += dt;
+    const idleThreshold = 1.5; // seconds of stillness before idle trick
+    const isIdle = s.idleTime > idleThreshold && vel < 0.5;
+    if (isIdle && !s.inIdleTrick && !inFooter) {
+      s.inIdleTrick = true;
+      s.idleTrickPhase = 0;
+    }
+    if (s.inIdleTrick) {
+      s.idleTrickPhase += dt;
+      if (s.idleTrickPhase > 4) s.inIdleTrick = false;
+    }
+
+    // ---- position: velocity loosens spring ----
+    const springX = springPos * dt;
+    const springY = springPos * dt;
+    const springZ = (springPos - 0.5) * dt;
+    ref.current.position.x += (lx - ref.current.position.x) * springX;
+    ref.current.position.y += (ly - ref.current.position.y) * springY;
+    ref.current.position.z += (lz - ref.current.position.z) * springZ;
 
     // ---- rotation ----
     const dx = lx - ref.current.position.x;
     const dy = ly - ref.current.position.y;
 
     if (inFooter && s.trickTime > 0.3 && !s.trickDone) {
-      // Victory roll: 360° around the forward axis, eased
       const rollAngle = easeInOutCubic(trickProgress) * Math.PI * 2;
-      const bankTarget = Math.sin(rollAngle) * 0.3;
-      ref.current.rotation.x += (-dy * 0.08 + bankTarget - ref.current.rotation.x) * 3 * dt;
+      ref.current.rotation.x += (-dy * 0.08 + Math.sin(rollAngle) * 0.3 - ref.current.rotation.x) * 3 * dt;
       ref.current.rotation.z += (Math.cos(rollAngle * 2) * 0.15 - ref.current.rotation.z) * 3 * dt;
-      ref.current.rotation.y += dt * 0.4 * (1 - trickProgress); // slow down spin during roll
+      ref.current.rotation.y += dt * 0.4 * (1 - trickProgress);
     } else if (inFooter && s.trickDone) {
-      // Post-trick: steady hover, gentle bob
       const bob = Math.sin(performance.now() * 0.001) * 0.04;
       ref.current.position.y += bob * dt * 8;
       ref.current.rotation.x += (-0.05 - ref.current.rotation.x) * 2 * dt;
       ref.current.rotation.z += (0.03 - ref.current.rotation.z) * 2 * dt;
       ref.current.rotation.y += dt * 0.03;
+    } else if (isIdle && s.inIdleTrick) {
+      // Idle trick: slow curiosity scan — yaw left then right
+      const phase = s.idleTrickPhase;
+      const scan = Math.sin(phase * 0.8) * 0.4;
+      ref.current.rotation.x += (-dy * 0.08 - ref.current.rotation.x) * 2 * dt;
+      ref.current.rotation.z += (dx * 0.06 - ref.current.rotation.z) * 2 * dt;
+      ref.current.rotation.y += (scan + dt * 0.02 - ref.current.rotation.y) * 2 * dt;
+      // Gentle hover bob
+      ref.current.position.y += Math.sin(performance.now() * 0.002 + s.phase) * 0.02 * dt * 6;
     } else {
-      ref.current.rotation.x += (-dy * 0.12 - ref.current.rotation.x) * 3 * dt;
-      ref.current.rotation.z += (dx * 0.1 - ref.current.rotation.z) * 3 * dt;
-      ref.current.rotation.y += dt * 0.08;
+      // Normal flight: bank into turns, amplified by speed
+      ref.current.rotation.x += (-dy * 0.12 * bankMultiplier - ref.current.rotation.x) * 3 * dt;
+      ref.current.rotation.z += (dx * 0.1 * bankMultiplier - ref.current.rotation.z) * 3 * dt;
+      ref.current.rotation.y += dt * (0.08 + vel * 0.005);
     }
 
     // ---- opacity ----
