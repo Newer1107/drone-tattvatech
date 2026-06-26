@@ -186,13 +186,26 @@ function DroneGhost() {
 /*  Public component                                                   */
 /* ------------------------------------------------------------------ */
 
+// Suppress non-actionable Three.js deprecation & shader precision warnings once
+const SUPPRESS_WARNS = [
+  "THREE.Clock: This module has been deprecated",
+  "warning X4122",
+];
+if (typeof console !== "undefined") {
+  const _warn = console.warn;
+  console.warn = (...args) => {
+    if (typeof args[0] === "string" && SUPPRESS_WARNS.some((s) => args[0].includes(s))) return;
+    _warn.apply(console, args);
+  };
+}
+
 export function PlayfulDrone() {
   return (
     <div className="pointer-events-none fixed inset-0 z-30">
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true, premultipliedAlpha: false }}
+        gl={{ antialias: true, alpha: true, premultipliedAlpha: false, powerPreference: "high-performance" }}
         onCreated={(state) => { state.gl.setClearColor(new THREE.Color(0, 0, 0), 0); }}
         style={{ background: "transparent" }}
       >
