@@ -1,62 +1,16 @@
 "use client";
 
-import { useRef, useEffect, useState, Suspense } from "react";
+import { useRef, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
-/*  Small square landing pad                                          */
+/*  Drone — drifts through the page on a Lissajous curve               */
+/*  No pads, no takeoff, no landing. Just a ghost in the machine.     */
 /* ------------------------------------------------------------------ */
 
-function LandingPad({ pos, visible }: { pos: [number, number, number]; visible: boolean }) {
-  const ref = useRef<THREE.Group>(null);
-  const opacity = useRef(0);
-
-  useFrame((_, delta) => {
-    if (!ref.current) return;
-    opacity.current += ((visible ? 1 : 0) - opacity.current) * 3 * delta;
-    ref.current.children.forEach((child) => {
-      if (child instanceof THREE.Mesh) {
-        const mat = child.material as THREE.MeshStandardMaterial;
-        mat.opacity = Math.max(0, opacity.current * 0.5);
-      }
-    });
-  });
-
-  return (
-    <group ref={ref} position={pos}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.5, 0.5]} />
-        <meshStandardMaterial color="#ff6a00" transparent opacity={0} roughness={0.4} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.6, 0.6]} />
-        <meshStandardMaterial color="#ff6a00" transparent opacity={0} side={THREE.DoubleSide} emissive="#ff6a00" emissiveIntensity={0.2} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Track section headings                                            */
-/* ------------------------------------------------------------------ */
-
-const HEADING_SELECTORS = "h2, h1";
-
-function getHeadingTargets(): { el: HTMLElement }[] {
-  const els: { el: HTMLElement }[] = [];
-  document.querySelectorAll(HEADING_SELECTORS).forEach((el) => {
-    if (el instanceof HTMLElement && el.isConnected) els.push({ el });
-  });
-  return els;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Drone — parks on right-side launchpad, glides down to footer      */
-/* ------------------------------------------------------------------ */
-
-function DroneGlider() {
+function DroneGhost() {
   const ref = useRef<THREE.Group>(null);
   const { scene } = useGLTF("/models/movingdrone.glb");
 
@@ -64,7 +18,6 @@ function DroneGlider() {
   if (model.current.children.length === 0) {
     const s = scene.clone();
     s.rotation.y = Math.PI;
-    // Kill initial flash: set all meshes to invisible on creation
     s.traverse((node) => {
       if (node instanceof THREE.Mesh) {
         const m = node.material as THREE.MeshStandardMaterial;
@@ -74,122 +27,67 @@ function DroneGlider() {
     model.current.add(s);
   }
 
-  const progress = useRef(0);
-  const headings = useRef<{ el: HTMLElement }[]>([]);
-  const lookTarget = useRef(new THREE.Vector3());
-  const lookWeight = useRef(0);
-  const heroPassed = useRef(false);
-  const droneOpacity = useRef(0);
+  const state = useRef({
+    scroll: 0,
+    opacity: 0,
+    phase: Math.random() * 100, // unique phase offset per session
+  });
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const refresh = () => { headings.current = getHeadingTargets(); timer = null; };
-    const handler = () => { if (!timer) timer = setTimeout(refresh, 250); };
-    refresh();
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => { window.removeEventListener("scroll", handler); if (timer) clearTimeout(timer); };
+    const onScroll = () => { state.current.scroll = window.scrollY; };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useFrame((_, delta) => {
     if (!ref.current) return;
     const dt = Math.min(delta, 0.05);
+    const s = state.current;
 
-    heroPassed.current = window.scrollY > window.innerHeight * 0.7;
-    droneOpacity.current += ((heroPassed.current ? 1 : 0) - droneOpacity.current) * 3 * dt;
-
+    // scroll progress (0–1)
     const docH = document.documentElement.scrollHeight - window.innerHeight;
-    const raw = docH > 0 ? window.scrollY / docH : 0;
-    progress.current += (raw - progress.current) * 3 * dt;
-    const p = progress.current;
+    const p = docH > 0 ? s.scroll / docH : 0;
 
-    // Flight path arcs from launch pad [3.5, 0.5, 2] to landing pad [3.5, -2.5, 2]
-    // Swoops left and dips in the middle, then returns — U-shaped.
-    const flyX = 3.5 + Math.sin(p * Math.PI) * -5.5;
-    const flyY = 0.5 - p * 3;
-    const flyZ = 2 + Math.sin(p * Math.PI * 2) * -1.2;
+    // gate: appear after hero, full opacity by p≈0.15
+    const heroGate = Math.min(1, Math.max(0, (s.scroll - window.innerHeight * 0.6) / (window.innerHeight * 0.3)));
+    s.opacity += (heroGate - s.opacity) * 3 * dt;
 
-    // Parked = hold position at the nearest pad with grounded tilt.
-    const isParked = p < 0.08 || p > 0.92;
-    const targetX = flyX;
-    const targetY = isParked ? (p < 0.5 ? 0.5 : -2.5) : flyY;
-    const targetZ = flyZ;
+    // ---- Lissajous path in viewport space ----
+    // x: figure-8 sweep, width 7 units
+    const lx = Math.sin(p * Math.PI * 2 + s.phase * 0.01) * 3.5;
+    // y: scrolls from top to bottom, with a gentle wobble
+    const ly = 2.2 - p * 4.4 + Math.sin(p * Math.PI * 3 + s.phase * 0.01) * 0.6;
+    // z: depth oscillation, forward then back
+    const lz = Math.sin(p * Math.PI + s.phase * 0.01) * 1.5;
 
-    ref.current.position.x += (targetX - ref.current.position.x) * 4 * dt;
-    ref.current.position.y += (targetY - ref.current.position.y) * 4 * dt;
-    ref.current.position.z += (targetZ - ref.current.position.z) * 3 * dt;
+    // smooth follow
+    ref.current.position.x += (lx - ref.current.position.x) * 3 * dt;
+    ref.current.position.y += (ly - ref.current.position.y) * 3 * dt;
+    ref.current.position.z += (lz - ref.current.position.z) * 2.5 * dt;
 
-    // Fade — hidden in hero, fully visible after
-    const fade = droneOpacity.current;
+    // ---- rotation: gentle tumble in the direction of travel ----
+    const dx = lx - ref.current.position.x;
+    const dy = ly - ref.current.position.y;
+    ref.current.rotation.x += (-dy * 0.12 - ref.current.rotation.x) * 3 * dt;
+    ref.current.rotation.z += (dx * 0.1 - ref.current.rotation.z) * 3 * dt;
+    ref.current.rotation.y += dt * 0.08; // slow constant spin
+
+    // ---- opacity ----
+    const matOpacity = Math.max(0.01, Math.min(1, s.opacity * 0.6));
     ref.current.children.forEach((child) => {
       child.traverse((node) => {
         if (node instanceof THREE.Mesh) {
-          const mat = node.material as THREE.MeshStandardMaterial;
-          if (mat && mat.transparent !== undefined) {
-            mat.transparent = true;
-            mat.opacity = Math.max(0.01, fade);
-          }
+          const m = node.material as THREE.MeshStandardMaterial;
+          if (m) { m.opacity = matOpacity; }
         }
       });
     });
-
-    // Look at headings while flying
-    const vh = window.innerHeight;
-    let best = Infinity;
-    let bestEl: HTMLElement | null = null;
-    for (const h of headings.current) {
-      const r = h.el.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > vh) continue;
-      const dist = Math.abs(r.top + r.height / 2 - vh / 2);
-      if (dist < best) { best = dist; bestEl = h.el; }
-    }
-
-    if (!isParked && bestEl) {
-      const r = bestEl.getBoundingClientRect();
-      const sx = (r.left + r.width / 2) / window.innerWidth * 2 - 1;
-      const sy = -(r.top + r.height / 2) / window.innerHeight * 2 + 1;
-      lookTarget.current.set(sx * 5, sy * 3, 0);
-      lookWeight.current = Math.min(1, lookWeight.current + dt * 3);
-      const dir = new THREE.Vector3().subVectors(lookTarget.current, ref.current.position).normalize();
-      const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), dir);
-      ref.current.quaternion.slerp(q, dt * 2.5);
-    } else {
-      lookWeight.current = Math.max(0, lookWeight.current - dt);
-      // Grounded tilt
-      ref.current.rotation.x += (0.35 - ref.current.rotation.x) * 3 * dt;
-      ref.current.rotation.z += (0.15 - ref.current.rotation.z) * 3 * dt;
-    }
-
-    if (!isParked) {
-      ref.current.position.y += Math.sin(performance.now() * 0.0015) * 0.03 * dt * 6;
-    }
   });
 
   return (
-    <group ref={ref} scale={0.25}>
+    <group ref={ref} scale={0.2}>
       <primitive object={model.current} />
     </group>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Progress line                                                     */
-/* ------------------------------------------------------------------ */
-
-function ProgressLine() {
-  const [pct, setPct] = useState(0);
-  useEffect(() => {
-    const onScroll = () => {
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      setPct(docH > 0 ? window.scrollY / docH : 0);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return (
-    <div className="pointer-events-none absolute right-4 top-14 bottom-14 w-[2px] rounded-full bg-surface-variant/20 md:right-6 lg:right-8">
-      <div className="absolute inset-x-0 bottom-0 rounded-full bg-[#ff6a00] transition-all duration-200 ease-out" style={{ height: `${pct * 100}%`, boxShadow: "0 0 6px rgba(255,106,0,0.3)" }} />
-    </div>
   );
 }
 
@@ -198,29 +96,8 @@ function ProgressLine() {
 /* ------------------------------------------------------------------ */
 
 export function PlayfulDrone() {
-  const [heroPassed, setHeroPassed] = useState(false);
-  const [scrollPct, setScrollPct] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const sy = window.scrollY;
-      setHeroPassed(sy > window.innerHeight * 0.7);
-      const docH = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollPct(docH > 0 ? sy / docH : 0);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Pad at launch (start) position — right-mid. Pad at land (end) — right-bottom.
-  // Show start pad when hero passed and not landed yet
-  const showStartPad = heroPassed && scrollPct < 0.9;
-  const showEndPad = scrollPct > 0.85;
-
   return (
     <div className="pointer-events-none fixed inset-0 z-30">
-      <ProgressLine />
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
         dpr={[1, 1.5]}
@@ -232,9 +109,7 @@ export function PlayfulDrone() {
           <ambientLight intensity={0.6} />
           <directionalLight position={[5, 8, 6]} intensity={1} />
           <Environment preset="studio" environmentIntensity={0.4} />
-          <LandingPad pos={[3.5, 0.5, 2]} visible={showStartPad} />
-          <LandingPad pos={[3.5, -2.5, 2]} visible={showEndPad} />
-          <DroneGlider />
+          <DroneGhost />
         </Suspense>
       </Canvas>
     </div>
