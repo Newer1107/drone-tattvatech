@@ -67,9 +67,8 @@ export function Hero() {
       onMouseMove={!reducedMotion ? handleMouseMove : undefined}
     >
       {/* Background Video with dark overlay */}
-      <div className="absolute inset-0 mask-fade-bottom">
+      <div suppressHydrationWarning className="absolute inset-0 mask-fade-bottom">
         <video
-          suppressHydrationWarning
           className="object-cover w-full h-full"
           loop
           muted
