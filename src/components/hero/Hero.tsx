@@ -1,11 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { Particles } from "@/components/shared/Particles";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+
+function ClientVideo() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = document.createElement("video");
+    el.className = "object-cover w-full h-full";
+    el.loop = true;
+    el.muted = true;
+    el.autoplay = true;
+    el.playsInline = true;
+    el.innerHTML = '<source src="/videos/hero-bg.mp4" type="video/mp4" />';
+    ref.current.appendChild(el);
+    return () => { el.remove(); };
+  }, []);
+  return <div ref={ref} className="absolute inset-0" />;
+}
 
 const DroneCanvas = dynamic(
   () => import("@/components/hero/DroneCanvas").then((mod) => mod.DroneCanvas),
@@ -67,16 +84,12 @@ export function Hero() {
       onMouseMove={!reducedMotion ? handleMouseMove : undefined}
     >
       {/* Background Video with dark overlay */}
-      <div suppressHydrationWarning className="absolute inset-0 mask-fade-bottom">
-        <video
-          className="object-cover w-full h-full"
-          loop
-          muted
-          autoPlay
-          playsInline
-        >
-          <source src="/videos/hero-bg.mp4" type="video/mp4" />
-        </video>
+      {/*
+        Video rendered client-side via useEffect to avoid hydration mismatch
+        caused by browser extensions (YPSC) that inject buttons into <video>.
+      */}
+      <div className="absolute inset-0 mask-fade-bottom">
+        <ClientVideo />
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
