@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["drone.tattvatech.co.in"],
   images: {
     formats: ["image/avif", "image/webp"],
   },
