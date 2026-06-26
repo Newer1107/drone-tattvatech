@@ -77,10 +77,11 @@ export function Navigation() {
                 {NAV_LINKS.map((link) => (
                   <SheetClose
                     key={link.href}
+                    className="w-full"
                     render={
-                      <a
-                        href={link.href}
-                        className="rounded-lg px-3 py-2.5 text-sm font-medium uppercase tracking-widest text-on-surface transition-colors hover:bg-muted hover:text-[#ff6a00]"
+                      <button
+                        onClick={() => { window.location.hash = link.href; }}
+                        className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium uppercase tracking-widest text-on-surface transition-colors hover:bg-muted hover:text-[#ff6a00]"
                       />
                     }
                   >
@@ -90,9 +91,10 @@ export function Navigation() {
               </div>
               <div className="mt-auto px-4 pb-8">
                 <SheetClose
+                  className="w-full"
                   render={
-                    <a
-                      href="#enroll"
+                    <button
+                      onClick={() => { window.location.hash = "#enroll"; }}
                       className="flex w-full items-center justify-center rounded-full bg-[#ff6a00] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#e05e00] active:translate-y-px"
                     />
                   }
