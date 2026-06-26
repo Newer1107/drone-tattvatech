@@ -60,7 +60,6 @@ export function DroneAssembly() {
   const heroText = useRef<HTMLDivElement>(null);
   const gsapReady = useRef(false);
 
-  const rafId = useRef(0);
   const cleanup = useRef<(() => void) | null>(null);
 
   const handleVideoReady = useRef((v: HTMLVideoElement) => {
@@ -79,27 +78,17 @@ export function DroneAssembly() {
     v.currentTime = 0;
     gsap.set(endEl, { opacity: 0 });
 
-    let targetTime = 0;
-
-    function tick() {
-      if (!v) return;
-      const diff = targetTime - v.currentTime;
-      v.currentTime += diff * 0.18;
-      rafId.current = requestAnimationFrame(tick);
-    }
-    rafId.current = requestAnimationFrame(tick);
-
     const st = ScrollTrigger.create({
       id: "assembly-pin",
       trigger: section.current,
       start: "top top",
       end: "+=3800",
       pin: true,
-      scrub: 1.2,
+      scrub: 0.5,
       anticipatePin: 1,
       onUpdate: (self) => {
         if (v.readyState < 2) return;
-        targetTime = self.progress * (v.duration || 10);
+        v.currentTime = self.progress * (v.duration || 10);
       },
     });
 
@@ -108,7 +97,7 @@ export function DroneAssembly() {
       trigger: section.current,
       start: "top top",
       end: "+=3800",
-      scrub: 1.2,
+      scrub: 0.5,
       onUpdate: (self) => {
         gsap.set(endEl, { opacity: self.progress > 0.92 ? (self.progress - 0.92) / 0.08 : 0 });
         gsap.set(hero, { opacity: self.progress > 0.15 ? 0 : 1 - self.progress / 0.15 });
@@ -139,7 +128,6 @@ export function DroneAssembly() {
     });
 
     cleanup.current = () => {
-      cancelAnimationFrame(rafId.current);
       st.kill();
       endSt.kill();
       labelTl.kill();
