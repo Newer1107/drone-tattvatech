@@ -64,6 +64,13 @@ function DroneGlider() {
   if (model.current.children.length === 0) {
     const s = scene.clone();
     s.rotation.y = Math.PI;
+    // Kill initial flash: set all meshes to invisible on creation
+    s.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        const m = node.material as THREE.MeshStandardMaterial;
+        if (m) { m.transparent = true; m.opacity = 0; }
+      }
+    });
     model.current.add(s);
   }
 
@@ -95,30 +102,24 @@ function DroneGlider() {
     progress.current += (raw - progress.current) * 3 * dt;
     const p = progress.current;
 
-    // Stationary pads: launch at [3.5, 0.5, 2], landing at [3.5, -2.5, 2].
-    // Drone parks at the nearest pad — no blended glide path.
-    const flightBlend = p < 0.08 ? 0 : p > 0.92 ? 0 : Math.sin((p - 0.08) / 0.84 * Math.PI);
-    const fly = flightBlend;
-    const park = 1 - fly;
+    // Flight path arcs from launch pad [3.5, 0.5, 2] to landing pad [3.5, -2.5, 2]
+    // Swoops left and dips in the middle, then returns — U-shaped.
+    const flyX = 3.5 + Math.sin(p * Math.PI) * -5.5;
+    const flyY = 0.5 - p * 3;
+    const flyZ = 2 + Math.sin(p * Math.PI * 2) * -1.2;
 
-    const parkX = 3.5;
-    const parkY = p < 0.5 ? 0.5 : -2.5;
-    const parkZ = 2;
+    // Parked = hold position at the nearest pad with grounded tilt.
+    const isParked = p < 0.08 || p > 0.92;
+    const targetX = flyX;
+    const targetY = isParked ? (p < 0.5 ? 0.5 : -2.5) : flyY;
+    const targetZ = flyZ;
 
-    const flyX = -3 + p * 6;
-    const flyY = 2 - p * 4;
-    const flyZ = -2 + p * 3.5;
+    ref.current.position.x += (targetX - ref.current.position.x) * 4 * dt;
+    ref.current.position.y += (targetY - ref.current.position.y) * 4 * dt;
+    ref.current.position.z += (targetZ - ref.current.position.z) * 3 * dt;
 
-    const tx = parkX * park + flyX * fly;
-    const ty = parkY * park + flyY * fly;
-    const tz = parkZ * park + flyZ * fly;
-
-    ref.current.position.x += (tx - ref.current.position.x) * 4 * dt;
-    ref.current.position.y += (ty - ref.current.position.y) * 4 * dt;
-    ref.current.position.z += (tz - ref.current.position.z) * 3 * dt;
-
-    // Fade based on hero gate + flight
-    const fade = droneOpacity.current * (0.2 + 0.8 * (0.3 + 0.7 * fly));
+    // Fade — hidden in hero, fully visible after
+    const fade = droneOpacity.current;
     ref.current.children.forEach((child) => {
       child.traverse((node) => {
         if (node instanceof THREE.Mesh) {
@@ -142,7 +143,7 @@ function DroneGlider() {
       if (dist < best) { best = dist; bestEl = h.el; }
     }
 
-    if (fly > 0.01 && bestEl) {
+    if (!isParked && bestEl) {
       const r = bestEl.getBoundingClientRect();
       const sx = (r.left + r.width / 2) / window.innerWidth * 2 - 1;
       const sy = -(r.top + r.height / 2) / window.innerHeight * 2 + 1;
@@ -153,10 +154,12 @@ function DroneGlider() {
       ref.current.quaternion.slerp(q, dt * 2.5);
     } else {
       lookWeight.current = Math.max(0, lookWeight.current - dt);
-      ref.current.rotation.x += (0.2 * park - ref.current.rotation.x) * 3 * dt;
+      // Grounded tilt
+      ref.current.rotation.x += (0.35 - ref.current.rotation.x) * 3 * dt;
+      ref.current.rotation.z += (0.15 - ref.current.rotation.z) * 3 * dt;
     }
 
-    if (fly > 0.05) {
+    if (!isParked) {
       ref.current.position.y += Math.sin(performance.now() * 0.0015) * 0.03 * dt * 6;
     }
   });
