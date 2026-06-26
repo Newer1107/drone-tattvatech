@@ -6,10 +6,10 @@ import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
-/*  Landing pad — a subtle platform with glow ring                    */
+/*  Small square landing pad                                          */
 /* ------------------------------------------------------------------ */
 
-function LandingPad({ visible }: { visible: boolean }) {
+function LandingPad({ pos, visible }: { pos: [number, number, number]; visible: boolean }) {
   const ref = useRef<THREE.Group>(null);
   const opacity = useRef(0);
 
@@ -19,46 +19,20 @@ function LandingPad({ visible }: { visible: boolean }) {
     ref.current.children.forEach((child) => {
       if (child instanceof THREE.Mesh) {
         const mat = child.material as THREE.MeshStandardMaterial;
-        mat.opacity = Math.max(0, opacity.current * 0.6);
+        mat.opacity = Math.max(0, opacity.current * 0.5);
       }
     });
   });
 
   return (
-    <group ref={ref}>
-      {/* Main pad — subtle disc */}
-      <mesh position={[0, -1.85, 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.6, 1.2, 48]} />
-        <meshStandardMaterial
-          color="#ff6a00"
-          transparent
-          opacity={0}
-          side={THREE.DoubleSide}
-          roughness={0.3}
-          metalness={0.1}
-        />
+    <group ref={ref} position={pos}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.5, 0.5]} />
+        <meshStandardMaterial color="#ff6a00" transparent opacity={0} roughness={0.4} side={THREE.DoubleSide} />
       </mesh>
-      {/* Glow ring */}
-      <mesh position={[0, -1.83, 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.1, 1.4, 48]} />
-        <meshStandardMaterial
-          color="#ff6a00"
-          transparent
-          opacity={0}
-          side={THREE.DoubleSide}
-          emissive="#ff6a00"
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-      {/* Inner fill */}
-      <mesh position={[0, -1.86, 2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.55, 32]} />
-        <meshStandardMaterial
-          color="#151b2a"
-          transparent
-          opacity={0}
-          roughness={0.8}
-        />
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.6, 0.6]} />
+        <meshStandardMaterial color="#ff6a00" transparent opacity={0} side={THREE.DoubleSide} emissive="#ff6a00" emissiveIntensity={0.2} />
       </mesh>
     </group>
   );
@@ -79,7 +53,7 @@ function getHeadingTargets(): { el: HTMLElement }[] {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Drone — parks on platform, glides across page after hero          */
+/*  Drone — parks on right-side launchpad, glides down to footer      */
 /* ------------------------------------------------------------------ */
 
 function DroneGlider() {
@@ -100,7 +74,6 @@ function DroneGlider() {
   const heroPassed = useRef(false);
   const droneOpacity = useRef(0);
 
-  // Refresh heading list
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const refresh = () => { headings.current = getHeadingTargets(); timer = null; };
@@ -114,27 +87,32 @@ function DroneGlider() {
     if (!ref.current) return;
     const dt = Math.min(delta, 0.05);
 
-    // ---- hero gate: drone only appears after hero is scrolled past ----
     heroPassed.current = window.scrollY > window.innerHeight * 0.7;
     droneOpacity.current += ((heroPassed.current ? 1 : 0) - droneOpacity.current) * 3 * dt;
 
-    // scroll progress
     const docH = document.documentElement.scrollHeight - window.innerHeight;
     const raw = docH > 0 ? window.scrollY / docH : 0;
     progress.current += (raw - progress.current) * 3 * dt;
     const p = progress.current;
 
-    // blend between PARKED and FLYING
+    // PARKED at right side start (p≈0) and right side bottom (p≈1)
     const flightBlend = p < 0.08 ? 0 : p > 0.92 ? 0 : Math.sin((p - 0.08) / 0.84 * Math.PI);
     const fly = flightBlend;
     const park = 1 - fly;
 
-    const parkX = 0, parkY = -1.8, parkZ = 2;
-    const parkRx = 0.35, parkRz = 0.2;
+    // Start: right-mid (beside "Every Component" section). End: right-bottom (footer).
+    const parkStart = { x: 3.5, y: 0.5, z: 2 };
+    const parkEnd = { x: 3.5, y: -2.5, z: 2 };
 
-    const flyX = -4 + p * 8;
-    const flyY = 2.5 - p * 4.5;
-    const flyZ = -1 + p * 3;
+    // Blend between start and end parked positions based on progress
+    const parkX = parkStart.x + (parkEnd.x - parkStart.x) * p;
+    const parkY = parkStart.y + (parkEnd.y - parkStart.y) * p;
+    const parkZ = parkStart.z + (parkEnd.z - parkStart.z) * p;
+
+    // Flying path with a bit of arc
+    const flyX = -3 + p * 6;
+    const flyY = 2 - p * 4;
+    const flyZ = -2 + p * 3.5;
 
     const tx = parkX * park + flyX * fly;
     const ty = parkY * park + flyY * fly;
@@ -144,23 +122,21 @@ function DroneGlider() {
     ref.current.position.y += (ty - ref.current.position.y) * 4 * dt;
     ref.current.position.z += (tz - ref.current.position.z) * 3 * dt;
 
-    // fade drone with hero gate
-    const finalOpacity = droneOpacity.current * (0.3 + 0.7 * (0.2 + 0.8 * fly));
+    // Fade based on hero gate + flight
+    const fade = droneOpacity.current * (0.2 + 0.8 * (0.3 + 0.7 * fly));
     ref.current.children.forEach((child) => {
-      if (child instanceof THREE.Mesh || child instanceof THREE.Group) {
-        child.traverse((node) => {
-          if (node instanceof THREE.Mesh) {
-            const mat = node.material as THREE.MeshStandardMaterial;
-            if (mat && mat.transparent !== undefined) {
-              mat.transparent = true;
-              mat.opacity = Math.max(0.01, finalOpacity);
-            }
+      child.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          const mat = node.material as THREE.MeshStandardMaterial;
+          if (mat && mat.transparent !== undefined) {
+            mat.transparent = true;
+            mat.opacity = Math.max(0.01, fade);
           }
-        });
-      }
+        }
+      });
     });
 
-    // look at headings while flying
+    // Look at headings while flying
     const vh = window.innerHeight;
     let best = Infinity;
     let bestEl: HTMLElement | null = null;
@@ -170,9 +146,6 @@ function DroneGlider() {
       const dist = Math.abs(r.top + r.height / 2 - vh / 2);
       if (dist < best) { best = dist; bestEl = h.el; }
     }
-
-    let targetRx = parkRx * park;
-    let targetRz = parkRz * park;
 
     if (fly > 0.01 && bestEl) {
       const r = bestEl.getBoundingClientRect();
@@ -185,8 +158,7 @@ function DroneGlider() {
       ref.current.quaternion.slerp(q, dt * 2.5);
     } else {
       lookWeight.current = Math.max(0, lookWeight.current - dt);
-      ref.current.rotation.x += (targetRx - ref.current.rotation.x) * 3 * dt;
-      ref.current.rotation.z += (targetRz - ref.current.rotation.z) * 3 * dt;
+      ref.current.rotation.x += (0.2 * park - ref.current.rotation.x) * 3 * dt;
     }
 
     if (fly > 0.05) {
@@ -195,7 +167,7 @@ function DroneGlider() {
   });
 
   return (
-    <group ref={ref} scale={0.3}>
+    <group ref={ref} scale={0.25}>
       <primitive object={model.current} />
     </group>
   );
@@ -229,13 +201,24 @@ function ProgressLine() {
 
 export function PlayfulDrone() {
   const [heroPassed, setHeroPassed] = useState(false);
+  const [scrollPct, setScrollPct] = useState(0);
 
   useEffect(() => {
-    const check = () => setHeroPassed(window.scrollY > window.innerHeight * 0.7);
-    check();
-    window.addEventListener("scroll", check, { passive: true });
-    return () => window.removeEventListener("scroll", check);
+    const onScroll = () => {
+      const sy = window.scrollY;
+      setHeroPassed(sy > window.innerHeight * 0.7);
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollPct(docH > 0 ? sy / docH : 0);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Pad at launch (start) position — right-mid. Pad at land (end) — right-bottom.
+  // Show start pad when hero passed and not landed yet
+  const showStartPad = heroPassed && scrollPct < 0.9;
+  const showEndPad = scrollPct > 0.85;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-30">
@@ -251,7 +234,8 @@ export function PlayfulDrone() {
           <ambientLight intensity={0.6} />
           <directionalLight position={[5, 8, 6]} intensity={1} />
           <Environment preset="studio" environmentIntensity={0.4} />
-          <LandingPad visible={heroPassed} />
+          <LandingPad pos={[3.5, 0.5, 2]} visible={showStartPad} />
+          <LandingPad pos={[3.5, -2.5, 2]} visible={showEndPad} />
           <DroneGlider />
         </Suspense>
       </Canvas>
