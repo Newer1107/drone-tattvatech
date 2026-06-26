@@ -69,6 +69,7 @@ export function Hero() {
       {/* Background Video with dark overlay */}
       <div className="absolute inset-0 mask-fade-bottom">
         <video
+          suppressHydrationWarning
           className="object-cover w-full h-full"
           loop
           muted
