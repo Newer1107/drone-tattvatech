@@ -34,7 +34,7 @@ function AssemblyVideo({
     v.preload = "auto";
     v.muted = true;
     v.playsInline = true;
-    v.className = "w-full h-auto";
+    v.className = "absolute inset-0 w-full h-full object-cover";
     v.style.pointerEvents = "none";
     v.innerHTML =
       '<source src="/videos/create_a_video_where_start_fro-cleaned.mp4" type="video/mp4" />';
@@ -45,7 +45,7 @@ function AssemblyVideo({
     };
   }, [onReady]);
 
-  return <div ref={ref} className="w-full" />;
+  return <div ref={ref} className="absolute inset-0" />;
 }
 
 /* ================================================================== */
@@ -150,15 +150,13 @@ export function DroneAssembly() {
 
   return (
     <section ref={section} className="relative min-h-screen w-full bg-surface overflow-hidden">
-      {/* Full-viewport video */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[80vw] max-w-6xl">
-          <AssemblyVideo onReady={handleVideoReady} />
-        </div>
+      {/* Fullscreen video — same as Hero */}
+      <div className="absolute inset-0">
+        <AssemblyVideo onReady={handleVideoReady} />
       </div>
 
-      {/* Dark overlay for readability */}
-      <div className="pointer-events-none absolute inset-0 bg-black/10" />
+      {/* Dark overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
 
       {/* Hero-style headline overlaying video */}
       <div ref={heroText} className="pointer-events-none absolute inset-0 flex items-center justify-center">
