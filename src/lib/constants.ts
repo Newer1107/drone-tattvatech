@@ -1,42 +1,10 @@
-import type { NavLink, LearningLevel, DroneComponent, ApplicationCard } from "./types";
+import type { NavLink, DroneComponent, ApplicationCard } from "./types";
 
 export const NAV_LINKS: NavLink[] = [
   { label: "Academy", href: "#academy" },
   { label: "Builder", href: "#builder" },
   { label: "Impact", href: "#impact" },
   { label: "Projects", href: "#projects" },
-];
-
-export const LEARNING_LEVELS: LearningLevel[] = [
-  {
-    id: 1,
-    title: "Fundamentals",
-    description: "Aerodynamics, physics of flight, and safety protocols.",
-    icon: "book_2",
-    unlocked: true,
-    progress: 100,
-  },
-  {
-    id: 2,
-    title: "Build & Mechanics",
-    description: "Component selection, soldering, and structural assembly.",
-    icon: "build",
-    unlocked: false,
-  },
-  {
-    id: 3,
-    title: "Programming & Telemetry",
-    description: "Flight controllers, PID tuning, and data transmission.",
-    icon: "terminal",
-    unlocked: false,
-  },
-  {
-    id: 4,
-    title: "AI & Autonomy",
-    description: "Computer vision, pathfinding, and autonomous missions.",
-    icon: "memory",
-    unlocked: false,
-  },
 ];
 
 export const DRONE_COMPONENTS: DroneComponent[] = [

@@ -4,6 +4,7 @@ import { useRef, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { fixAllMaterials } from "@/lib/fixShaderPrecision";
 
 /* ------------------------------------------------------------------ */
 /*  Drone — drifts through the page on a Lissajous curve               */
@@ -25,6 +26,11 @@ function DroneGhost() {
       }
     });
     model.current.add(s);
+
+    // Shader precision fix: clamp Ems ≥ 0 to prevent X4122 denormal warning
+    s.traverse((node) => {
+      if (node instanceof THREE.Mesh) fixAllMaterials(node);
+    });
   }
 
   const state = useRef({
@@ -258,10 +264,10 @@ function DroneGhost() {
 /*  Public component                                                   */
 /* ------------------------------------------------------------------ */
 
-// Suppress non-actionable Three.js deprecation & shader precision warnings once
+// Suppress non-actionable Three.js deprecation warnings once
+// X4122 is NOT suppressed here — fixed at the shader level in fixShaderPrecision.ts
 const SUPPRESS_WARNS = [
   "THREE.Clock: This module has been deprecated",
-  "warning X4122",
 ];
 if (typeof console !== "undefined") {
   const _warn = console.warn;

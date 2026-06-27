@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, Float } from "@react-three/drei";
 import type * as THREE from "three";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { fixAllMaterials } from "@/lib/fixShaderPrecision";
 
 interface FloatingDroneProps {
   modelPath?: string;
@@ -28,6 +29,15 @@ export function FloatingDrone({
   const { scene } = useGLTF(modelPath);
   const { scrollY } = useScrollPosition();
   const reducedMotion = useReducedMotion();
+  const fixed = useRef(false);
+
+  // Shader precision fix: clamp Ems ≥ 0 to prevent X4122 denormal warning
+  useEffect(() => {
+    if (!fixed.current) {
+      fixAllMaterials(scene);
+      fixed.current = true;
+    }
+  }, [scene]);
 
   useFrame((_, delta) => {
     if (!group.current || reducedMotion) return;

@@ -3,15 +3,6 @@ export interface NavLink {
   href: string;
 }
 
-export interface LearningLevel {
-  id: number;
-  title: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  progress?: number;
-}
-
 export interface DroneComponent {
   id: string;
   name: string;

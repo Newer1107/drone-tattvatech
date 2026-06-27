@@ -182,3 +182,22 @@
     opacity: 0;
   }
 }
+
+/* ── Journey section animations ── */
+
+@keyframes journey-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.5); }
+}
+
+@keyframes journey-float {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(8px, -8px); }
+  50% { transform: translate(-4px, 4px); }
+  75% { transform: translate(6px, 6px); }
+}
+
+@keyframes journey-fade {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
