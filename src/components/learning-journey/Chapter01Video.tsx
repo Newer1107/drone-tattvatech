@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 /*  Scroll-controlled assembly video → blur → content reveal.        */
 /* ────────────────────────────────────────────────────────────────── */
 
-const VIDEOP = 0.32; // video occupies first 32 % of scroll progress
+const VIDEOP = 0.50; // video occupies first 50 % of scroll progress (slower = smoother)
 const BLURP  = 0.06; // blur transition occupies next 6 %
 
 const CHIPS = [
@@ -150,7 +150,7 @@ export function Chapter01Video({
 
     /* Create video element via DOM (hydration-safe) */
     const v = document.createElement("video");
-    v.className = "h-full w-full object-contain";
+    v.className = "h-full w-full object-cover";
     v.muted = true;
     v.playsInline = true;
     v.preload = "auto";
@@ -178,9 +178,9 @@ export function Chapter01Video({
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: "+=320vh",
+          end: "+=380vh",
           pin: true,
-          scrub: 0.4,
+          scrub: 0.3,
           anticipatePin: 1,
         },
       });
@@ -206,14 +206,15 @@ export function Chapter01Video({
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: "+=320vh",
+        end: "+=380vh",
         onUpdate: (self) => {
           const p = self.progress;
           if (v.readyState < 2) return;
 
           if (p < VIDEOP) {
-            /* Phase 1: scrub video */
-            v.currentTime = (p / VIDEOP) * dur;
+            /* Phase 1: scrub video with lerp for smoothness */
+            const target = (p / VIDEOP) * dur;
+            v.currentTime += (target - v.currentTime) * 0.15;
 
             /* Overlay opacity: fade out near the end of the video */
             const overlayStay = p < 0.22 ? 1 : Math.max(0, 1 - (p - 0.22) / 0.1);
@@ -249,10 +250,8 @@ export function Chapter01Video({
       className="relative bg-white"
       style={{ minHeight: "100vh", overflow: "hidden" }}
     >
-      {/* ── Video container (centred, 80 % width) ── */}
-      <div className="absolute inset-0 flex items-center justify-center px-4 md:px-10">
-        <div className="h-full w-full max-w-[80vw]" ref={videoWrapRef} />
-      </div>
+      {/* ── Video container (fullscreen) ── */}
+      <div className="absolute inset-0" ref={videoWrapRef} />
 
       {/* ── Overlay text on video (Phase 1) ── */}
       <div
@@ -294,12 +293,12 @@ export function Chapter01Video({
         className="pointer-events-none absolute inset-0 z-10 bg-white/10"
       />
 
-      {/* ── Content panel (Phase 3) ── */}
+      {/* ── Content panel (Phase 3) — scrollable from top ── */}
       <div
         ref={contentRef}
-        className="absolute inset-0 z-20 flex items-center justify-center overflow-y-auto"
+        className="absolute inset-0 z-20 overflow-y-auto"
       >
-        <div className="mx-auto w-full max-w-3xl px-6 py-16 md:px-10 lg:px-14">
+        <div className="mx-auto w-full max-w-3xl px-6 pb-32 pt-12 md:px-10 lg:px-14 md:pt-20">
           {STEPS.map((step, si) => (
             <div
               key={step.title}
