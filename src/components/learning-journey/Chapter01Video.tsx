@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 /*  Scroll-controlled assembly video → blur → content reveal.        */
 /* ────────────────────────────────────────────────────────────────── */
 
-const VIDEOP = 0.80; // video occupies first 80 % of scroll progress
+const VIDEOP = 0.82; // video occupies first 82 % of scroll progress
 const BLURP  = 0.06; // blur transition occupies next 6 %
 
 const CHIPS = [
@@ -178,7 +178,7 @@ export function Chapter01Video({
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
-          start: "top top+=100",   // 100px buffer — rests at frame 0 before pin
+          start: "top top",
           end: "+=700vh",
           pin: true,
           scrub: 0.5,
@@ -223,7 +223,7 @@ export function Chapter01Video({
   return (
     <section
       ref={cbRef}
-      className="relative bg-white"
+      className="relative overflow-hidden bg-white"
       style={{ minHeight: "100vh" }}
     >
       {/* ── Video container (fullscreen) ── */}
@@ -269,13 +269,12 @@ export function Chapter01Video({
         className="pointer-events-none absolute inset-0 z-10 bg-white/70"
       />
 
-      {/* ── Content panel (Phase 3) ── */}
+      {/* ── Content panel (Phase 3) — scrolls within viewport ── */}
       <div
         ref={contentRef}
-        className="absolute inset-0 z-20 overflow-y-auto"
-        style={{ WebkitOverflowScrolling: "touch" }}
+        className="absolute inset-0 z-20 overflow-y-auto overflow-x-hidden"
       >
-        <div className="mx-auto w-full max-w-3xl px-6 pb-32 pt-12 md:px-10 lg:px-14 md:pt-20">
+        <div className="mx-auto w-full max-w-3xl px-6 pb-24 pt-12 md:px-10 lg:px-14 md:pt-20">
           {STEPS.map((step, si) => (
             <div
               key={step.title}
@@ -331,6 +330,8 @@ export function Chapter01Video({
               )}
             </div>
           ))}
+          {/* Spacer so last step scrolls into view */}
+          <div className="h-16" />
         </div>
       </div>
     </section>
