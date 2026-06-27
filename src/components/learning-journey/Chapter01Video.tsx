@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 /*  Scroll-controlled assembly video → blur → content reveal.        */
 /* ────────────────────────────────────────────────────────────────── */
 
-const VIDEOP = 0.50; // video occupies first 50 % of scroll progress (slower = smoother)
+const VIDEOP = 0.80; // video occupies first 80 % of scroll progress
 const BLURP  = 0.06; // blur transition occupies next 6 %
 
 const CHIPS = [
@@ -130,6 +130,7 @@ export function Chapter01Video({
   const contentRef = useRef<HTMLDivElement>(null);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
   const setupDone = useRef(false);
 
   const cbRef = useCallback(
@@ -173,66 +174,40 @@ export function Chapter01Video({
     const onMeta = () => {
       const dur = v.duration || 12;
 
-      /* ── Phase timeline ── */
+      /* ── Single timeline: scrub handles ALL animations + video ── */
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
-          start: "top top",
-          end: "+=450vh",
+          start: "top top+=100",   // 100px buffer — rests at frame 0 before pin
+          end: "+=700vh",
           pin: true,
-          scrub: 0.3,
+          scrub: 0.5,
           anticipatePin: 1,
         },
+        onUpdate: () => {
+          if (v.readyState < 2) return;
+          const p = tl.progress();
+          v.currentTime = p < VIDEOP ? (p / VIDEOP) * dur : dur;
+        },
       });
+      tlRef.current = tl;
 
-      /* Overlay text fades in during video phase */
-      tl.to(overlay, { opacity: 1, duration: 0.06 }, 0);
-      /* Chips stagger in */
-      tl.fromTo(chips, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.03, stagger: 0.02 }, 0.04);
+      /* Overlay + chips */
+      tl.to(overlay, { opacity: 1, duration: 0.06 }, 0.02);
+      tl.fromTo(chips, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 }, 0.06);
+      tl.to(overlay, { opacity: 0, duration: 0.04 }, VIDEOP - 0.06);
 
-      /* Blur overlay fades in during transition */
+      /* Blur transition */
       tl.to(blurEl, { opacity: 1, duration: 0.04 }, VIDEOP);
+      tl.set(blurEl, { backdropFilter: "blur(20px)" }, VIDEOP + BLURP);
 
       /* Content panel appears after blur */
       tl.to(contentEl, { opacity: 1, duration: 0.02 }, VIDEOP + BLURP);
 
-      /* Steps reveal progressively — wider spacing for readability */
+      /* Steps reveal */
       steps.forEach((step, i) => {
-        const pos = VIDEOP + BLURP + i * 0.10;
-        tl.fromTo(step, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.12 }, pos);
-      });
-
-      /* ── Video scrubbing ── */
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: "+=450vh",
-        onUpdate: (self) => {
-          const p = self.progress;
-          if (v.readyState < 2) return;
-
-          if (p < VIDEOP) {
-            /* Phase 1: scrub video — direct assignment for full playback */
-            v.currentTime = (p / VIDEOP) * dur;
-
-            /* Overlay opacity: fade out near the end of the video */
-            const overlayStay = p < 0.22 ? 1 : Math.max(0, 1 - (p - 0.22) / 0.1);
-            gsap.set(overlay, { opacity: overlayStay });
-
-            /* Keep blur hidden during video */
-            gsap.set(blurEl, { opacity: 0 });
-            gsap.set(contentEl, { opacity: 0 });
-          } else {
-            /* Phase 2 + 3: freeze video at last frame, apply blur */
-            v.currentTime = dur;
-            if (p < VIDEOP + BLURP) {
-              const bp = (p - VIDEOP) / BLURP;
-              gsap.set(blurEl, { opacity: bp });
-              gsap.set(blurEl, { backdropFilter: `blur(${bp * 20}px)` });
-            }
-          }
-          /* Phase 3 is handled by the timeline above */
-        },
+        const pos = VIDEOP + BLURP + i * 0.035;
+        tl.fromTo(step, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.05 }, pos);
       });
     };
 
@@ -240,9 +215,8 @@ export function Chapter01Video({
 
     return () => {
       v.removeEventListener("loadedmetadata", onMeta);
-      ScrollTrigger.getAll().forEach((st) => {
-        if (st.vars.trigger === section) st.kill();
-      });
+      tlRef.current?.scrollTrigger?.kill();
+      tlRef.current?.kill();
     };
   }, []);
 
@@ -250,7 +224,7 @@ export function Chapter01Video({
     <section
       ref={cbRef}
       className="relative bg-white"
-      style={{ minHeight: "100vh", overflow: "hidden" }}
+      style={{ minHeight: "100vh" }}
     >
       {/* ── Video container (fullscreen) ── */}
       <div className="absolute inset-0" ref={videoWrapRef} />
@@ -295,10 +269,11 @@ export function Chapter01Video({
         className="pointer-events-none absolute inset-0 z-10 bg-white/70"
       />
 
-      {/* ── Content panel (Phase 3) — scrollable from top ── */}
+      {/* ── Content panel (Phase 3) ── */}
       <div
         ref={contentRef}
         className="absolute inset-0 z-20 overflow-y-auto"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="mx-auto w-full max-w-3xl px-6 pb-32 pt-12 md:px-10 lg:px-14 md:pt-20">
           {STEPS.map((step, si) => (
