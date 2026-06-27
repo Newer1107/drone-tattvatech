@@ -178,7 +178,7 @@ export function Chapter01Video({
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: "+=380vh",
+          end: "+=450vh",
           pin: true,
           scrub: 0.3,
           anticipatePin: 1,
@@ -196,25 +196,24 @@ export function Chapter01Video({
       /* Content panel appears after blur */
       tl.to(contentEl, { opacity: 1, duration: 0.02 }, VIDEOP + BLURP);
 
-      /* Steps reveal progressively */
+      /* Steps reveal progressively — wider spacing for readability */
       steps.forEach((step, i) => {
-        const pos = VIDEOP + BLURP + i * 0.13;
-        tl.fromTo(step, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.1 }, pos);
+        const pos = VIDEOP + BLURP + i * 0.10;
+        tl.fromTo(step, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.12 }, pos);
       });
 
       /* ── Video scrubbing ── */
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: "+=380vh",
+        end: "+=450vh",
         onUpdate: (self) => {
           const p = self.progress;
           if (v.readyState < 2) return;
 
           if (p < VIDEOP) {
-            /* Phase 1: scrub video with lerp for smoothness */
-            const target = (p / VIDEOP) * dur;
-            v.currentTime += (target - v.currentTime) * 0.15;
+            /* Phase 1: scrub video — direct assignment for full playback */
+            v.currentTime = (p / VIDEOP) * dur;
 
             /* Overlay opacity: fade out near the end of the video */
             const overlayStay = p < 0.22 ? 1 : Math.max(0, 1 - (p - 0.22) / 0.1);
@@ -223,11 +222,14 @@ export function Chapter01Video({
             /* Keep blur hidden during video */
             gsap.set(blurEl, { opacity: 0 });
             gsap.set(contentEl, { opacity: 0 });
-          } else if (p < VIDEOP + BLURP) {
-            /* Phase 2: blur transition */
-            const bp = (p - VIDEOP) / BLURP;
-            gsap.set(blurEl, { opacity: bp });
-            gsap.set(blurEl, { backdropFilter: `blur(${bp * 12}px)` });
+          } else {
+            /* Phase 2 + 3: freeze video at last frame, apply blur */
+            v.currentTime = dur;
+            if (p < VIDEOP + BLURP) {
+              const bp = (p - VIDEOP) / BLURP;
+              gsap.set(blurEl, { opacity: bp });
+              gsap.set(blurEl, { backdropFilter: `blur(${bp * 20}px)` });
+            }
           }
           /* Phase 3 is handled by the timeline above */
         },
@@ -287,10 +289,10 @@ export function Chapter01Video({
         </div>
       </div>
 
-      {/* ── Blur overlay (Phase 2) ── */}
+      {/* ── Blur overlay (Phase 2) — solid enough for readable content ── */}
       <div
         ref={blurRef}
-        className="pointer-events-none absolute inset-0 z-10 bg-white/10"
+        className="pointer-events-none absolute inset-0 z-10 bg-white/70"
       />
 
       {/* ── Content panel (Phase 3) — scrollable from top ── */}
@@ -310,12 +312,12 @@ export function Chapter01Video({
               </h3>
 
               {step.type === "list" && (
-                <div className="mt-4 space-y-3">
+                <div className="mt-4 space-y-3 rounded-xl bg-white/90 px-5 py-4 shadow-sm">
                   {step.items.map((item) => (
                     <div key={item.name} className="flex items-start gap-3">
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6a00]/30" />
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6a00]/40" />
                       <span
-                        className="font-body text-black/65"
+                        className="font-body font-medium text-black/85"
                         style={{ fontSize: "clamp(16px, 1.2vw, 19px)" }}
                       >
                         {item.name}
@@ -330,13 +332,13 @@ export function Chapter01Video({
                   {step.items.map((item) => (
                     <div
                       key={item.name}
-                      className="rounded-xl border border-black/[0.04] bg-white/70 px-4 py-3.5 shadow-[0_2px_8px_0_rgba(0,0,0,0.04)] backdrop-blur-sm"
+                      className="rounded-xl border border-black/[0.06] bg-white/90 px-5 py-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]"
                     >
-                      <span className="font-display text-sm font-semibold text-black/80">
+                      <span className="font-display text-base font-semibold text-black/85">
                         {item.name}
                       </span>
                       {item.desc && (
-                        <p className="mt-0.5 font-body text-xs leading-relaxed text-black/40">
+                        <p className="mt-1 font-body text-sm leading-relaxed text-black/55">
                           {item.desc}
                         </p>
                       )}
@@ -346,7 +348,7 @@ export function Chapter01Video({
               )}
 
               {step.type === "donut" && (
-                <div className="mt-4">
+                <div className="mt-4 rounded-xl bg-white/90 px-5 py-4 shadow-sm">
                   <Donut
                     items={step.items as { label: string; value: number }[]}
                   />
