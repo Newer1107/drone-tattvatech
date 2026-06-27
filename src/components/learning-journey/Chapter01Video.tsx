@@ -224,7 +224,7 @@ export function Chapter01Video({
     <section
       ref={cbRef}
       className="relative overflow-hidden bg-white"
-      style={{ minHeight: "100vh" }}
+      style={{ minHeight: "100vh", transform: "translateZ(0)" }}
     >
       {/* ── Video container (fullscreen) ── */}
       <div className="absolute inset-0" ref={videoWrapRef} />

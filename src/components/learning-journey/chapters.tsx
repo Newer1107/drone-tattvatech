@@ -83,7 +83,7 @@ export function ChapterClassroom({
   ];
 
   return (
-    <section ref={cbRef} className="relative overflow-hidden bg-white" style={{ minHeight: "100vh" }}>
+    <section ref={cbRef} className="relative overflow-hidden bg-white" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
       <div className="mx-auto flex h-screen max-w-7xl items-center px-6 md:px-10 lg:px-14">
         {/* Text — 25% */}
         <div className="z-10 w-full max-w-md md:w-[28%]">
@@ -145,7 +145,7 @@ export function ChapterWorkshop({
   useScrollReveal(sectionRef, heroRef, cardRefs, 80);
 
   return (
-    <section ref={cbRef} className="relative overflow-hidden bg-[#fafaf8]" style={{ minHeight: "100vh" }}>
+    <section ref={cbRef} className="relative overflow-hidden bg-[#fafaf8]" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
       {/* Subtle dot-grid background */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -223,7 +223,7 @@ export function ChapterLab({
   useScrollReveal(sectionRef, heroRef, cardRefs, 80);
 
   return (
-    <section ref={cbRef} className="relative overflow-hidden bg-[#0d0d0d] text-white" style={{ minHeight: "100vh" }}>
+    <section ref={cbRef} className="relative overflow-hidden bg-[#0d0d0d] text-white" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
       {/* Drone left half */}
       <div className="absolute bottom-0 left-0 top-0 w-1/2">
         <ChapterDrone mode={data.layout} active={true} />
@@ -309,7 +309,7 @@ export function ChapterMission({
   ];
 
   return (
-    <section ref={cbRef} className="relative overflow-hidden bg-white" style={{ minHeight: "100vh" }}>
+    <section ref={cbRef} className="relative overflow-hidden bg-white" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
       {/* Subtle warm tone */}
       <div className="pointer-events-none absolute inset-0 bg-[#fafaf8] opacity-50" />
 
