@@ -4,7 +4,7 @@ import { DroneBuilder } from "@/components/drone-builder/DroneBuilder";
 import { Applications } from "@/components/applications/Applications";
 import { SkillsBento } from "@/components/applications/SkillsBento";
 import { DroneAssembly } from "@/components/drone-assembly/DroneAssembly";
-import { LearningJourneyReimagined } from "@/components/learning-journey/LearningJourneyReimagined";
+import { LearningJourney } from "@/components/learning-journey/LearningJourney";
 
 export default function Home() {
   return (
@@ -15,7 +15,7 @@ export default function Home() {
       <Applications />
       <SkillsBento />
       <DroneAssembly />
-      <LearningJourneyReimagined />
+      <LearningJourney />
     </>
   );
 }
