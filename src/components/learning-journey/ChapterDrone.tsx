@@ -6,11 +6,11 @@ import { Environment, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { fixAllMaterials } from "@/lib/fixShaderPrecision";
 
-/* ────────────────────────────────────────────────────────────────── */
-/*  3D drone scene — one per chapter.  frameloop="never" when hidden. */
-/* ────────────────────────────────────────────────────────────────── */
+const SPEEDS: Record<string, number> = { classroom: 0.1, workshop: 0.18, lab: 0.3, mission: 0.35 };
+const BOBS: Record<string, number> = { classroom: 0.03, workshop: 0.05, lab: 0.08, mission: 0.1 };
+const SCALES: Record<string, number> = { classroom: 1.5, workshop: 1.8, lab: 1.6, mission: 1.4 };
 
-export function ChapterDrone({ level, active }: { level: number; active: boolean }) {
+export function ChapterDrone({ mode, active }: { mode: string; active: boolean }) {
   return (
     <div className="h-full w-full">
       <Canvas
@@ -19,20 +19,18 @@ export function ChapterDrone({ level, active }: { level: number; active: boolean
         frameloop={active ? "always" : "never"}
         gl={{ antialias: true, alpha: true, outputColorSpace: "srgb", toneMapping: THREE.ACESFilmicToneMapping }}
       >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 8, 6]} intensity={0.8} />
+        <ambientLight intensity={mode === "lab" ? 0.3 : 0.5} />
+        <directionalLight position={[5, 8, 6]} intensity={mode === "lab" ? 0.5 : 0.8} />
         <pointLight position={[-3, 2, 2]} intensity={0.3} color="#ff6a00" />
-        <Environment preset="studio" environmentIntensity={0.3} />
-        <DroneModel level={level} />
+        <Environment preset="studio" environmentIntensity={mode === "lab" ? 0.15 : 0.3} />
+        <DroneModel mode={mode} />
       </Canvas>
-      <LevelOverlay level={level} />
+      <LevelOverlay mode={mode} />
     </div>
   );
 }
 
-/* ── Rotating drone ── */
-
-function DroneModel({ level }: { level: number }) {
+function DroneModel({ mode }: { mode: string }) {
   const group = useRef<THREE.Group>(null);
   const { scene } = useGLTF("/models/dronegen.glb");
   const fixed = useRef(false);
@@ -47,10 +45,10 @@ function DroneModel({ level }: { level: number }) {
   useFrame((_, delta) => {
     if (!group.current) return;
     const dt = Math.min(delta, 0.05);
-    const speeds = [0.12, 0.2, 0.28, 0.35];
-    const s = speeds[level] ?? 0.12;
+    const s = SPEEDS[mode] ?? 0.1;
+    const ba = BOBS[mode] ?? 0.03;
     group.current.rotation.y += dt * s;
-    const bob = Math.sin(performance.now() * 0.0008 + level * 1.2) * 0.04 * (level + 1);
+    const bob = Math.sin(performance.now() * 0.0008) * ba;
     group.current.position.y += (bob - group.current.position.y) * 2 * dt;
   });
 
@@ -58,55 +56,39 @@ function DroneModel({ level }: { level: number }) {
   cloned.rotation.y = Math.PI;
 
   return (
-    <group ref={group} scale={1.5}>
+    <group ref={group} scale={SCALES[mode] ?? 1.5}>
       <primitive object={cloned} />
     </group>
   );
 }
 
-/* ── Per-level CSS overlays ── */
-
-function LevelOverlay({ level }: { level: number }) {
+function LevelOverlay({ mode }: { mode: string }) {
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
-      {level === 1 && (
-        <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ width: "60%", aspectRatio: "1", background: "radial-gradient(circle, rgba(255,106,0,0.06) 0%, transparent 70%)" }}
+      {mode === "classroom" && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ width: "70%", aspectRatio: "1", background: "radial-gradient(circle, rgba(255,106,0,0.05) 0%, transparent 70%)" }}
         />
       )}
-
-      {level === 2 && (
+      {mode === "workshop" && (
         <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
-          <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(255,106,0,0.1)" strokeWidth="0.5" strokeDasharray="3 5" />
-          <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(255,106,0,0.06)" strokeWidth="0.5" strokeDasharray="2 8" />
-          <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="0.5" />
+          <circle cx="200" cy="200" r="130" fill="none" stroke="rgba(255,106,0,0.08)" strokeWidth="0.5" strokeDasharray="3 6" />
+          <circle cx="200" cy="200" r="150" fill="none" stroke="rgba(255,106,0,0.04)" strokeWidth="0.5" strokeDasharray="1 10" />
         </svg>
       )}
-
-      {level === 3 && (
+      {mode === "lab" && (
         <>
-          {[
-            { t: "8%", l: "20%" }, { t: "20%", l: "80%" }, { t: "80%", l: "15%" },
-            { t: "75%", l: "75%" }, { t: "50%", l: "10%" }, { t: "45%", l: "90%" },
-          ].map((p, i) => (
-            <span
-              key={i}
-              className="absolute h-1 w-1 rounded-full bg-[#ff6a00]/30"
-              style={{ top: p.t, left: p.l, animation: `jd-pulse 2s ease-in-out ${i * 0.3}s infinite` }}
+          {[{ t: "15%", l: "20%" }, { t: "20%", l: "75%" }, { t: "70%", l: "15%" }, { t: "75%", l: "80%" }, { t: "45%", l: "10%" }].map((p, i) => (
+            <span key={i} className="absolute h-1 w-1 rounded-full bg-[#ff6a00]/40"
+              style={{ top: p.t, left: p.l, animation: `jd-pulse 2s ease-in-out ${i * 0.4}s infinite` }}
             />
           ))}
         </>
       )}
-
-      {level === 4 && (
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
-          <path d="M120 140 Q 200 100, 260 200 Q 300 280, 200 300" fill="none" stroke="rgba(255,106,0,0.07)" strokeWidth="1" strokeDasharray="3 6" />
-          <path d="M300 100 Q 200 150, 150 250 Q 120 320, 250 320" fill="none" stroke="rgba(255,106,0,0.04)" strokeWidth="0.5" strokeDasharray="2 8" />
-          {[{ cx: 160, cy: 130, r: 8 }, { cx: 250, cy: 200, r: 10 }, { cx: 190, cy: 290, r: 7 }].map((d, i) => (
-            <circle key={i} cx={d.cx} cy={d.cy} r={d.r} fill="none" stroke="rgba(255,106,0,0.18)" strokeWidth="1" opacity={0.6} />
-          ))}
-        </svg>
+      {mode === "mission" && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ width: "85%", aspectRatio: "1", border: "1px solid rgba(255,106,0,0.06)" }}
+        />
       )}
     </div>
   );
