@@ -2,10 +2,11 @@
 
 import { useRef, useCallback } from "react";
 import { CHAPTERS } from "./data";
-import { ChapterClassroom, ChapterWorkshop, ChapterLab, ChapterMission } from "./chapters";
+import { ChapterWorkshop, ChapterLab, ChapterMission } from "./chapters";
+import { Chapter01Video } from "./Chapter01Video";
 import { ProgressBar } from "./ProgressBar";
 
-const CHAPTER_COMPONENTS = [ChapterClassroom, ChapterWorkshop, ChapterLab, ChapterMission] as const;
+const CHAPTER_COMPONENTS = [Chapter01Video, ChapterWorkshop, ChapterLab, ChapterMission] as const;
 
 export function LearningJourney() {
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
