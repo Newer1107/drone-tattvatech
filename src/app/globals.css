@@ -143,8 +143,8 @@
   text-wrap: balance;
 }
 
-/* Prevent horizontal overflow globally */
-html, body { overflow-x: hidden; }
+/* Prevent horizontal overflow — clip instead of hidden to avoid breaking sticky/scroll containers */
+html, body { overflow-x: clip; }
 
 @utility mask-fade-bottom {
   mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
