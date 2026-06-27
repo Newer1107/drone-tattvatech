@@ -137,8 +137,8 @@ export function Chapter01Video({
       },
     });
 
-    tl.to(overlay, { opacity: 1, duration: 0.06 }, 0.02);
-    tl.fromTo(chips, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 }, 0.06);
+    tl.to(overlay, { opacity: 1, duration: 0.01 }, 0);
+    tl.fromTo(chips, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 }, 0.04);
     tl.to(overlay, { opacity: 0, duration: 0.04 }, VIDEOP - 0.06);
     tl.to(blurEl, { opacity: 1, duration: 0.04 }, VIDEOP);
     tl.set(blurEl, { backdropFilter: "blur(20px)" }, VIDEOP + BLURP);
@@ -149,6 +149,7 @@ export function Chapter01Video({
     });
 
     tlRef.current = tl;
+    tl.progress(0.001);
     onRegisterTL(tl);
 
     return () => { v.remove(); tl.kill(); onRegisterTL(null); };

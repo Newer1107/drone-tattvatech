@@ -38,6 +38,7 @@ export function ChapterWorkshop({ data, onRegister, onRegisterTL }: ChProps) {
       tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
     });
 
+    tl.progress(0.001); // render initial visible state
     onRegisterTL(tl);
     return () => { tl.kill(); onRegisterTL(null); };
   }, [onRegisterTL]);
@@ -99,6 +100,7 @@ export function ChapterLab({ data, onRegister, onRegisterTL }: ChProps) {
       tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
     });
 
+    tl.progress(0.001);
     onRegisterTL(tl);
     return () => { tl.kill(); onRegisterTL(null); };
   }, [onRegisterTL]);
@@ -157,6 +159,7 @@ export function ChapterMission({ data, onRegister, onRegisterTL }: ChProps) {
       tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
     });
 
+    tl.progress(0.001);
     onRegisterTL(tl);
     return () => { tl.kill(); onRegisterTL(null); };
   }, [onRegisterTL]);
