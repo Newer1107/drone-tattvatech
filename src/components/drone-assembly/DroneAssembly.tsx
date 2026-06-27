@@ -149,7 +149,7 @@ export function DroneAssembly() {
       {/* Hero-style headline overlaying video */}
       <div ref={heroText} className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="text-center max-w-2xl px-6">
-          <p className="font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">
+          <p className="font-label text-[13px] font-semibold uppercase tracking-[0.2em] text-white/50">
             Scroll to Assemble
           </p>
           <h2 className="mt-4 font-heading text-4xl font-semibold text-white sm:text-5xl lg:text-6xl tracking-tight">
@@ -179,7 +179,7 @@ export function DroneAssembly() {
       {/* End state */}
       <div ref={endWrap} className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ opacity: 0 }}>
         <div className="text-center max-w-md">
-          <p className="font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">Built by Students.</p>
+          <p className="font-label text-[13px] font-semibold uppercase tracking-[0.2em] text-white/50">Built by Students.</p>
           <p className="mt-3 text-sm leading-relaxed text-white/70 font-body">
             The drone assembled here is the same platform used in our Level 2 curriculum — designed, built, and flown by students.
           </p>

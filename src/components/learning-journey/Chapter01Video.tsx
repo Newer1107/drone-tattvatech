@@ -38,23 +38,55 @@ function Donut({ items }: { items: { label: string; value: number }[] }) {
   const colors = ["#ff6a00", "#ff8c33", "#ffad66", "#ffce99"];
   const r = 34;
   return (
-    <div className="flex flex-wrap gap-5">
+    <div className="flex flex-wrap gap-6">
       {items.map((item, i) => {
         const circ = 2 * Math.PI * r;
         const len = (item.value / 100) * circ;
         return (
-          <div key={item.label} className="flex flex-col items-center gap-1">
-            <svg width="82" height="82" viewBox="0 0 82 82" className="shrink-0">
-              <circle cx="41" cy="41" r={r} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="5" />
-              <circle cx="41" cy="41" r={r} fill="none" stroke={colors[i] ?? "#ff6a00"} strokeWidth="5"
-                strokeDasharray={`${len} ${circ - len}`} transform="rotate(-90 41 41)" strokeLinecap="round" />
-              <text x="41" y="41" textAnchor="middle" dominantBaseline="central"
-                fontSize="14" fontWeight="700" fontFamily="var(--font-display)" fill="rgba(0,0,0,0.7)">{item.value}%</text>
-            </svg>
-            <span className="font-body text-[11px] text-black/40">{item.label}</span>
+          <div key={item.label} className="flex flex-col items-center gap-2">
+            <div className="rounded-xl bg-white/50 p-2 shadow-sm backdrop-blur-sm">
+              <svg width="82" height="82" viewBox="0 0 82 82" className="shrink-0">
+                <circle cx="41" cy="41" r={r} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="5" />
+                <circle cx="41" cy="41" r={r} fill="none" stroke={colors[i] ?? "#ff6a00"} strokeWidth="5"
+                  strokeDasharray={`${len} ${circ - len}`} transform="rotate(-90 41 41)" strokeLinecap="round" />
+                <text x="41" y="41" textAnchor="middle" dominantBaseline="central"
+                  fontSize="14" fontWeight="700" fontFamily="var(--font-display)" fill="rgba(0,0,0,0.7)">{item.value}%</text>
+              </svg>
+            </div>
+            <span className="font-body text-[12px] font-medium text-black/40">{item.label}</span>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CardList({ items }: { items: { name?: string }[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.name}
+          className="rounded-xl border border-black/[0.05] bg-white/60 px-4 py-3.5 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff6a00]/10 text-[10px] font-bold text-[#ff6a00]">✓</span>
+            <span className="font-body text-sm font-medium text-black/80">{item.name}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExperienceCards({ items }: { items: { name?: string; desc?: string }[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.name}
+          className="rounded-xl border border-black/[0.05] bg-white/60 px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+          <span className="font-display text-sm font-semibold text-black/85">{item.name}</span>
+          {item.desc && <p className="mt-1 font-body text-xs leading-relaxed text-black/45">{item.desc}</p>}
+        </div>
+      ))}
     </div>
   );
 }
@@ -146,34 +178,17 @@ export function Chapter01Video() {
         </div>
         <div ref={blurRef} className="pointer-events-none absolute inset-0 z-10 bg-white/70" />
         <div ref={contentRef} className="absolute inset-0 z-20 overflow-y-auto overflow-x-hidden">
-          <div className="mx-auto w-full max-w-3xl px-6 pb-24 pt-12 md:px-10 lg:px-14 md:pt-20">
+          <div className="mx-auto w-full max-w-4xl px-6 pb-24 pt-12 md:px-10 lg:px-14 md:pt-20">
             {STEPS.map((step, si) => (
-              <div key={step.title} ref={(el) => { stepRefs.current[si] = el; }} className="mb-8 last:mb-0">
-                <div className="flex items-center gap-3">
+              <div key={step.title} ref={(el) => { stepRefs.current[si] = el; }} className="mb-10 last:mb-0">
+                <div className="mb-5 flex items-center gap-3">
                   <span className="h-px flex-1 bg-black/5" />
                   <span className="font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff6a00]/60">{step.title}</span>
                   <span className="h-px flex-1 bg-black/5" />
                 </div>
-                {step.type === "list" && (
-                  <div className="mt-4 space-y-2">
-                    {step.items.map((item) => (
-                      <div key={item.name} className="flex items-start gap-3 pl-3" style={{ borderLeft: "2px solid rgba(255,106,0,0.2)" }}>
-                        <span className="font-body text-black/80" style={{ fontSize: "clamp(15px, 1.1vw, 18px)" }}>{item.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {step.type === "cards" && (
-                  <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                    {step.items.map((item) => (
-                      <div key={item.name} className="rounded-lg border border-black/[0.05] px-4 py-3" style={{ background: "rgba(255,255,255,0.5)" }}>
-                        <span className="font-display text-sm font-semibold text-black/85">{item.name}</span>
-                        {item.desc && <p className="mt-0.5 font-body text-xs leading-relaxed text-black/45">{item.desc}</p>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {step.type === "donut" && <div className="mt-4"><Donut items={step.items as { label: string; value: number }[]} /></div>}
+                {step.type === "list" && <CardList items={step.items} />}
+                {step.type === "cards" && <ExperienceCards items={step.items} />}
+                {step.type === "donut" && <Donut items={step.items as { label: string; value: number }[]} />}
               </div>
             ))}
             <div className="h-16" />

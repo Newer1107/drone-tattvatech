@@ -143,6 +143,9 @@
   text-wrap: balance;
 }
 
+/* Prevent horizontal overflow globally */
+html, body { overflow-x: hidden; }
+
 @utility mask-fade-bottom {
   mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }

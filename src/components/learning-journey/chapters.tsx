@@ -52,29 +52,36 @@ export function ChapterWorkshop({ data }: ChProps) {
 
   return (
     <section ref={sectionRef} className="sticky top-0" style={{ height: "180vh" }}>
-      <div className="sticky top-0 flex h-screen flex-col overflow-hidden bg-[#fafaf8]">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
+      <div className="sticky top-0 flex h-screen overflow-hidden bg-[#f3f3ef]">
+        {/* Subtle dot pattern */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.035]"
           style={{ backgroundImage: "radial-gradient(circle, #000 0.5px, transparent 0.5px)", backgroundSize: "24px 24px" }} />
-        <div className="flex flex-1 items-center justify-center px-20 pb-16 pt-20">
-          <div className="h-full w-full max-w-3xl"><ChapterDrone mode={data.layout} active={true} /></div>
+        {/* Left: Drone */}
+        <div className="relative z-10 flex w-1/2 items-center justify-center">
+          <div className="h-full w-full max-w-lg"><ChapterDrone mode={data.layout} active={true} /></div>
         </div>
-        <div className="z-20 px-6 pb-10 md:px-10 lg:px-14">
-          <div className="mx-auto max-w-5xl">
+        {/* Right: Content */}
+        <div className="relative z-10 flex w-1/2 items-center px-10 lg:px-14">
+          <div className="w-full max-w-md">
             <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
-            <p className="mt-1 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
-            <h2 className="font-display font-bold leading-[1.05] tracking-tight text-black/90"
-              style={{ fontSize: "clamp(28px, 4vw, 60px)" }}>{data.chapterTitle}</h2>
-            <div className="mt-3 flex gap-3">
+            <p className="mt-4 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
+            <h2 className="mt-2 font-display font-bold leading-[1.05] tracking-tight text-black/90"
+              style={{ fontSize: "clamp(32px, 4.5vw, 72px)" }}>{data.chapterTitle}</h2>
+            <p className="mt-4 font-body leading-relaxed text-black/40"
+              style={{ fontSize: "clamp(16px, 1.3vw, 20px)" }}>{data.subtitle}</p>
+            <div className="mt-8 space-y-4">
               {data.features.map((f, i) => (
                 <div key={f.title} ref={(el) => { cardRefs.current[i] = el; }}
-                  className="rounded-xl border border-black/[0.06] bg-white/60 px-4 py-2.5 shadow-sm backdrop-blur-sm" style={{ opacity: 0 }}>
-                  <span className="font-label text-[11px] font-semibold uppercase tracking-[0.12em] text-[#ff6a00]/80">{f.title}</span>
-                  <p className="mt-0.5 font-body text-xs text-black/40">{f.description}</p>
+                  className="rounded-xl border border-black/[0.06] bg-white/60 px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ opacity: 0 }}>
+                  <span className="font-label text-[11px] font-semibold uppercase tracking-[0.15em] text-[#ff6a00]/80">{f.title}</span>
+                  <p className="mt-1 font-body text-sm leading-relaxed text-black/45">{f.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
+        {/* Large section number */}
         <div className="pointer-events-none absolute bottom-0 right-0 select-none leading-none text-black/[0.015]"
           style={{ fontSize: "clamp(200px, 40vw, 600px)", fontWeight: 900, letterSpacing: "-0.06em" }}>{data.chapterNum}</div>
       </div>
@@ -130,34 +137,38 @@ export function ChapterMission({ data }: ChProps) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   useStickyReveal(sectionRef, cardRefs);
 
-  const cardPositions: React.CSSProperties[] = [
-    { top: "15%", left: "8%" }, { top: "15%", right: "8%" },
-    { bottom: "18%", left: "12%" }, { bottom: "18%", right: "12%" },
-  ];
-
   return (
     <section ref={sectionRef} className="sticky top-0" style={{ height: "180vh" }}>
-      <div className="sticky top-0 flex h-screen overflow-hidden bg-white">
-        <div className="pointer-events-none absolute inset-0 bg-[#fafaf8] opacity-50" />
-        <div className="flex flex-1 items-center justify-center px-28 py-20">
+      <div className="sticky top-0 flex h-screen overflow-hidden bg-[#f7f7f5]">
+        {/* Subtle dot pattern */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.02]"
+          style={{ backgroundImage: "radial-gradient(circle, #000 0.5px, transparent 0.5px)", backgroundSize: "32px 32px" }} />
+        {/* Left: Content */}
+        <div className="relative z-10 flex w-1/2 items-center px-10 lg:px-14">
+          <div className="w-full max-w-md">
+            <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
+            <p className="mt-4 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
+            <h2 className="mt-2 font-display font-bold leading-[1.05] tracking-tight text-black/90"
+              style={{ fontSize: "clamp(32px, 4.5vw, 72px)" }}>{data.chapterTitle}</h2>
+            <p className="mt-4 font-body leading-relaxed text-black/40"
+              style={{ fontSize: "clamp(16px, 1.3vw, 20px)" }}>{data.subtitle}</p>
+            <div className="mt-8 space-y-4">
+              {data.features.map((f, i) => (
+                <div key={f.title} ref={(el) => { cardRefs.current[i] = el; }}
+                  className="rounded-xl border border-black/[0.05] bg-white/70 px-5 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ opacity: 0 }}>
+                  <span className="font-label text-[11px] font-semibold uppercase tracking-[0.15em] text-[#ff6a00]/80">{f.title}</span>
+                  <p className="mt-1 font-body text-sm leading-relaxed text-black/45">{f.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Right: Drone */}
+        <div className="relative z-10 flex w-1/2 items-center justify-center">
           <div className="h-full w-full max-w-lg"><ChapterDrone mode={data.layout} active={true} /></div>
         </div>
-        <div className="absolute left-6 top-8 z-20 md:left-10 lg:left-14">
-          <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
-          <p className="mt-2 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
-          <h2 className="mt-1 font-display font-bold leading-[1.05] tracking-tight text-black/90"
-            style={{ fontSize: "clamp(28px, 3.5vw, 60px)" }}>{data.chapterTitle}</h2>
-          <p className="mt-2 max-w-xs font-body leading-relaxed text-black/50"
-            style={{ fontSize: "clamp(14px, 1.1vw, 17px)" }}>{data.subtitle}</p>
-        </div>
-        {data.features.map((f, i) => (
-          <div key={f.title} ref={(el) => { cardRefs.current[i] = el; }}
-            className="absolute z-20 w-52 rounded-2xl border border-black/[0.04] bg-white/70 px-4 py-3.5 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.06)] backdrop-blur-md"
-            style={{ opacity: 0, ...(cardPositions[i] ?? {}) }}>
-            <span className="font-label text-[10px] font-semibold uppercase tracking-[0.15em] text-[#ff6a00]">{f.title}</span>
-            <p className="mt-0.5 font-body text-xs leading-relaxed text-black/40">{f.description}</p>
-          </div>
-        ))}
+        {/* Large section number */}
         <div className="pointer-events-none absolute bottom-0 right-0 select-none leading-none text-black/[0.015]"
           style={{ fontSize: "clamp(200px, 40vw, 600px)", fontWeight: 900, letterSpacing: "-0.06em" }}>{data.chapterNum}</div>
       </div>
