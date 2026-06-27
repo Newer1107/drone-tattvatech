@@ -7,6 +7,7 @@ import { SmoothScroll } from "@/components/shared/SmoothScroll";
 import { CustomCursor } from "@/components/shared/CustomCursor";
 import { NoiseOverlay } from "@/components/shared/NoiseOverlay";
 import { PlayfulDrone } from "@/components/shared/PlayfulDrone";
+import { LoadingGate } from "@/components/shared/LoadingGate";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -59,14 +60,16 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <CustomCursor />
-        <NoiseOverlay />
-        <SmoothScroll>
-          <Navigation />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </SmoothScroll>
-        <PlayfulDrone />
+        <LoadingGate>
+          <CustomCursor />
+          <NoiseOverlay />
+          <SmoothScroll>
+            <Navigation />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </SmoothScroll>
+          <PlayfulDrone />
+        </LoadingGate>
       </body>
     </html>
   );
