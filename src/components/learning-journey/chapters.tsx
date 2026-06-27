@@ -6,9 +6,10 @@ import type { ChapterData } from "./data";
 import { ChapterDrone } from "./ChapterDrone";
 
 /* ────────────────────────────────────────────────────────────────── */
-/*  4 distinct layouts — NO internal ScrollTriggers.                  */
-/*  Each exposes a timeline that the parent drives via progress().    */
-/* ────────────────────────────────────────────────────────────────── */
+/*  Each chapter exposes a paused timeline via onRegisterTL.          */
+/*  Hero content renders visible by default. Only feature cards       */
+/*  (which have opacity:0 in JSX) are revealed by the timeline.       */
+/*────────────────────────────────────────────────────────────────── */
 
 interface ChProps {
   data: ChapterData;
@@ -16,32 +17,29 @@ interface ChProps {
   onRegisterTL: (tl: gsap.core.Timeline | null) => void;
 }
 
-/* ────────────────────────────────────────────────────── Chapter 02 */
-export function ChapterWorkshop({ data, onRegister, onRegisterTL }: ChProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+/* ── Shared effect: animate only cards (hero stays visible) ── */
 
-  const setRef = useCallback((el: HTMLElement | null) => { sectionRef.current = el; onRegister(el); }, [onRegister]);
-
+function useCardReveal(
+  cardRefs: React.MutableRefObject<(HTMLDivElement | null)[]>,
+  onRegisterTL: (tl: gsap.core.Timeline | null) => void,
+) {
   useEffect(() => {
-    const hero = heroRef.current;
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     const tl = gsap.timeline({ paused: true });
-
-    if (hero) {
-      const ch = Array.from(hero.children) as HTMLElement[];
-      tl.fromTo(ch, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.15, stagger: 0.04 }, 0);
-    }
     cards.forEach((card, i) => {
-      const pos = 0.2 + i * 0.22;
-      tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
+      tl.to(card, { opacity: 1, y: 0, duration: 0.2 }, 0.15 + i * 0.22);
     });
-
-    tl.progress(0.001); // render initial visible state
     onRegisterTL(tl);
     return () => { tl.kill(); onRegisterTL(null); };
   }, [onRegisterTL]);
+}
+
+/* ────────────────────────────────────────────────────── Chapter 02 */
+export function ChapterWorkshop({ data, onRegister, onRegisterTL }: ChProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const setRef = useCallback((el: HTMLElement | null) => { sectionRef.current = el; onRegister(el); }, [onRegister]);
+  useCardReveal(cardRefs, onRegisterTL);
 
   return (
     <section ref={setRef} className="relative overflow-hidden bg-[#fafaf8]" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
@@ -53,9 +51,9 @@ export function ChapterWorkshop({ data, onRegister, onRegisterTL }: ChProps) {
       </div>
       <div className="absolute bottom-0 left-0 right-0 z-20">
         <div className="mx-auto max-w-5xl px-6 pb-10 md:px-10 lg:px-14">
-          <div ref={heroRef}>
+          <div>
             <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
-            <p className="mt-3 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} · {data.chapterTitle}</p>
+            <p className="mt-3 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
             <h2 className="mt-2 font-display font-bold leading-[1.05] tracking-tight text-black/90"
               style={{ fontSize: "clamp(36px, 5vw, 80px)" }}>{data.chapterTitle}</h2>
             <p className="mt-3 max-w-xl font-body leading-relaxed text-black/50"
@@ -81,37 +79,17 @@ export function ChapterWorkshop({ data, onRegister, onRegisterTL }: ChProps) {
 /* ────────────────────────────────────────────────────── Chapter 03 */
 export function ChapterLab({ data, onRegister, onRegisterTL }: ChProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
   const setRef = useCallback((el: HTMLElement | null) => { sectionRef.current = el; onRegister(el); }, [onRegister]);
-
-  useEffect(() => {
-    const hero = heroRef.current;
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    const tl = gsap.timeline({ paused: true });
-
-    if (hero) {
-      const ch = Array.from(hero.children) as HTMLElement[];
-      tl.fromTo(ch, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.15, stagger: 0.04 }, 0);
-    }
-    cards.forEach((card, i) => {
-      const pos = 0.2 + i * 0.22;
-      tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
-    });
-
-    tl.progress(0.001);
-    onRegisterTL(tl);
-    return () => { tl.kill(); onRegisterTL(null); };
-  }, [onRegisterTL]);
+  useCardReveal(cardRefs, onRegisterTL);
 
   return (
     <section ref={setRef} className="relative overflow-hidden bg-[#0d0d0d] text-white" style={{ minHeight: "100vh", transform: "translateZ(0)" }}>
       <div className="absolute bottom-0 left-0 top-0 w-1/2"><ChapterDrone mode={data.layout} active={true} /></div>
       <div className="absolute bottom-0 right-0 top-0 flex w-1/2 items-center px-10 lg:px-14">
-        <div ref={heroRef} className="w-full max-w-md">
+        <div className="w-full max-w-md">
           <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
-          <p className="mt-4 font-label text-xs uppercase tracking-[0.2em] text-white/30">{data.chapterNum} · {data.chapterTitle}</p>
+          <p className="mt-4 font-label text-xs uppercase tracking-[0.2em] text-white/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
           <h2 className="mt-2 font-display font-bold leading-[1.05] tracking-tight text-white/90"
             style={{ fontSize: "clamp(42px, 5.5vw, 90px)" }}>{data.chapterTitle}</h2>
           <p className="mt-4 font-body leading-relaxed text-white/40"
@@ -140,29 +118,9 @@ export function ChapterLab({ data, onRegister, onRegisterTL }: ChProps) {
 /* ────────────────────────────────────────────────────── Chapter 04 */
 export function ChapterMission({ data, onRegister, onRegisterTL }: ChProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
   const setRef = useCallback((el: HTMLElement | null) => { sectionRef.current = el; onRegister(el); }, [onRegister]);
-
-  useEffect(() => {
-    const hero = heroRef.current;
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    const tl = gsap.timeline({ paused: true });
-
-    if (hero) {
-      const ch = Array.from(hero.children) as HTMLElement[];
-      tl.fromTo(ch, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.15, stagger: 0.04 }, 0);
-    }
-    cards.forEach((card, i) => {
-      const pos = 0.2 + i * 0.22;
-      tl.fromTo(card, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.18 }, pos);
-    });
-
-    tl.progress(0.001);
-    onRegisterTL(tl);
-    return () => { tl.kill(); onRegisterTL(null); };
-  }, [onRegisterTL]);
+  useCardReveal(cardRefs, onRegisterTL);
 
   const cardPositions: React.CSSProperties[] = [
     { top: "15%", left: "8%" }, { top: "15%", right: "8%" },
@@ -175,9 +133,9 @@ export function ChapterMission({ data, onRegister, onRegisterTL }: ChProps) {
       <div className="absolute inset-0 flex items-center justify-center px-28 py-20">
         <div className="h-full w-full max-w-lg"><ChapterDrone mode={data.layout} active={true} /></div>
       </div>
-      <div ref={heroRef} className="absolute left-6 top-8 z-20 md:left-10 lg:left-14">
+      <div className="absolute left-6 top-8 z-20 md:left-10 lg:left-14">
         <span className="font-label text-[10px] font-semibold uppercase tracking-[0.3em] text-[#ff6a00]">{data.badge}</span>
-        <p className="mt-2 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} · {data.chapterTitle}</p>
+        <p className="mt-2 font-label text-xs uppercase tracking-[0.2em] text-black/30">{data.chapterNum} &middot; {data.chapterTitle}</p>
         <h2 className="mt-1 font-display font-bold leading-[1.05] tracking-tight text-black/90"
           style={{ fontSize: "clamp(32px, 4vw, 72px)" }}>{data.chapterTitle}</h2>
         <p className="mt-2 max-w-xs font-body leading-relaxed text-black/50"

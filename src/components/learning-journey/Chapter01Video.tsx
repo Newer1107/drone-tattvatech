@@ -114,17 +114,18 @@ export function Chapter01Video({
     videoWrap.appendChild(v);
     vRef.current = v;
 
-    /* Initial states */
-    gsap.set(overlay, { opacity: 0 });
+    /* Initial hidden states (things that should scroll-reveal) */
     gsap.set(chipsEl.children, { opacity: 0, y: 12 });
     gsap.set(blurEl, { opacity: 0 });
     gsap.set(contentEl, { opacity: 0 });
     gsap.set(stepRefs.current, { opacity: 0, y: 20 });
 
+    /* Overlay visible by default — timeline only fades it out */
+    gsap.set(overlay, { opacity: 1 });
+
     const chips = Array.from(chipsEl.children) as HTMLElement[];
     const steps = stepRefs.current.filter(Boolean) as HTMLElement[];
 
-    /* Build paused timeline — parent drives progress() */
     const VIDEOP = 0.82;
     const BLURP = 0.06;
 
@@ -137,8 +138,7 @@ export function Chapter01Video({
       },
     });
 
-    tl.to(overlay, { opacity: 1, duration: 0.01 }, 0);
-    tl.fromTo(chips, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 }, 0.04);
+    tl.to(chips, { opacity: 1, y: 0, duration: 0.04, stagger: 0.03 }, 0.04);
     tl.to(overlay, { opacity: 0, duration: 0.04 }, VIDEOP - 0.06);
     tl.to(blurEl, { opacity: 1, duration: 0.04 }, VIDEOP);
     tl.set(blurEl, { backdropFilter: "blur(20px)" }, VIDEOP + BLURP);
@@ -149,7 +149,6 @@ export function Chapter01Video({
     });
 
     tlRef.current = tl;
-    tl.progress(0.001);
     onRegisterTL(tl);
 
     return () => { v.remove(); tl.kill(); onRegisterTL(null); };
