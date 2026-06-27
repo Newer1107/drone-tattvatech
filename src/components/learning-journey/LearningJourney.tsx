@@ -16,7 +16,7 @@ export function LearningJourney() {
   }, []);
 
   return (
-    <section className="bg-white">
+    <section className="overflow-hidden bg-white">
       <ProgressBar sectionRefs={sectionsRef as React.RefObject<(HTMLElement | null)[]>} />
 
       {CHAPTERS.map((chapter, i) => {

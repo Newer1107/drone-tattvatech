@@ -279,21 +279,22 @@ export function Chapter01Video({
             <div
               key={step.title}
               ref={(el) => { stepRefs.current[si] = el; }}
-              className="mb-14 last:mb-0"
+              className="mb-8 last:mb-0"
             >
-              <h3 className="font-label text-[11px] font-semibold uppercase tracking-[0.2em] text-[#ff6a00]/70">
-                {step.title}
-              </h3>
+              {/* Step label */}
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-black/5" />
+                <span className="font-label text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff6a00]/60">
+                  {step.title}
+                </span>
+                <span className="h-px flex-1 bg-black/5" />
+              </div>
 
               {step.type === "list" && (
-                <div className="mt-4 space-y-3 rounded-xl bg-white/90 px-5 py-4 shadow-sm">
-                  {step.items.map((item) => (
-                    <div key={item.name} className="flex items-start gap-3">
-                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#ff6a00]/40" />
-                      <span
-                        className="font-body font-medium text-black/85"
-                        style={{ fontSize: "clamp(16px, 1.2vw, 19px)" }}
-                      >
+                <div className="mt-4 space-y-2">
+                  {step.items.map((item, ii) => (
+                    <div key={item.name} className="flex items-start gap-3 pl-3" style={{ borderLeft: "2px solid rgba(255,106,0,0.2)" }}>
+                      <span className="font-body text-black/80" style={{ fontSize: "clamp(15px, 1.1vw, 18px)" }}>
                         {item.name}
                       </span>
                     </div>
@@ -302,19 +303,16 @@ export function Chapter01Video({
               )}
 
               {step.type === "cards" && (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                   {step.items.map((item) => (
                     <div
                       key={item.name}
-                      className="rounded-xl border border-black/[0.06] bg-white/90 px-5 py-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.06)]"
+                      className="rounded-lg border border-black/[0.05] px-4 py-3"
+                      style={{ background: "rgba(255,255,255,0.5)" }}
                     >
-                      <span className="font-display text-base font-semibold text-black/85">
-                        {item.name}
-                      </span>
+                      <span className="font-display text-sm font-semibold text-black/85">{item.name}</span>
                       {item.desc && (
-                        <p className="mt-1 font-body text-sm leading-relaxed text-black/55">
-                          {item.desc}
-                        </p>
+                        <p className="mt-0.5 font-body text-xs leading-relaxed text-black/45">{item.desc}</p>
                       )}
                     </div>
                   ))}
@@ -322,10 +320,8 @@ export function Chapter01Video({
               )}
 
               {step.type === "donut" && (
-                <div className="mt-4 rounded-xl bg-white/90 px-5 py-4 shadow-sm">
-                  <Donut
-                    items={step.items as { label: string; value: number }[]}
-                  />
+                <div className="mt-4">
+                  <Donut items={step.items as { label: string; value: number }[]} />
                 </div>
               )}
             </div>
