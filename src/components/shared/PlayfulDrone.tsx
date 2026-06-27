@@ -39,6 +39,11 @@ function DroneGhost() {
     lastScrollTime: 0,
     idleTrickPhase: 0,
     inIdleTrick: false,
+    // entrance
+    entranceStarted: false,
+    entranceProgress: 0,
+    entranceDone: false,
+    entranceInitialized: false,
   });
 
   useEffect(() => {
@@ -65,6 +70,54 @@ function DroneGhost() {
     if (!ref.current) return;
     const dt = Math.min(delta, 0.05);
     const s = state.current;
+
+    // ──────────────────────────────────────────────
+    //  ENTRANCE — triggered when app finishes loading
+    // ──────────────────────────────────────────────
+    if (!s.entranceDone && document.body.classList.contains("app-loaded")) {
+      if (!s.entranceStarted) {
+        s.entranceStarted = true;
+        s.entranceProgress = 0;
+        ref.current.position.set(0, -0.5, 0);
+        ref.current.scale.set(0.9, 0.9, 0.9);
+        ref.current.rotation.set(0, 0, 0);
+      }
+
+      if (s.entranceProgress < 1) {
+        s.entranceProgress += dt * 0.4; // ~2.5s
+        const ep = Math.min(1, s.entranceProgress);
+        const ease = ep < 0.5 ? 4 * ep * ep * ep : 1 - Math.pow(-2 * ep + 2, 3) / 2;
+
+        // Scale: 0.9 → 0.2
+        const sc = 0.9 - 0.7 * ease;
+        ref.current.scale.set(sc, sc, sc);
+
+        // Y rotation: one full spin
+        ref.current.rotation.y = ep * Math.PI * 2;
+
+        // Gentle drift upward from center
+        ref.current.position.y = -0.5 + ease * 0.8;
+        ref.current.position.x = Math.sin(ep * Math.PI) * 0.5;
+
+        // Opacity fade in (overwrites the initial 0)
+        const matOpacity = Math.min(1, ep * 1.8);
+        ref.current.children.forEach((child) => {
+          child.traverse((node) => {
+            if (node instanceof THREE.Mesh) {
+              const m = node.material as THREE.MeshStandardMaterial;
+              if (m) m.opacity = matOpacity;
+            }
+          });
+        });
+
+        if (ep >= 1) {
+          s.entranceDone = true;
+          // Hand off opacity to the normal hero-gate system
+          s.opacity = 0.6;
+        }
+        return; // Skip normal flight during entrance
+      }
+    }
 
     const docH = document.documentElement.scrollHeight - window.innerHeight;
     const p = docH > 0 ? s.scroll / docH : 0;

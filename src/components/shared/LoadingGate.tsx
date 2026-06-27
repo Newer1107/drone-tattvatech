@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { LoadingScreen } from "./LoadingScreen";
 
 export function LoadingGate({ children }: { children: React.ReactNode }) {
@@ -9,6 +9,12 @@ export function LoadingGate({ children }: { children: React.ReactNode }) {
   const handleFinish = useCallback(() => {
     setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (loaded) {
+      document.body.classList.add("app-loaded");
+    }
+  }, [loaded]);
 
   return (
     <>
