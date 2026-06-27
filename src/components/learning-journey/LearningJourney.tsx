@@ -78,7 +78,7 @@ export function LearningJourney() {
   }, []);
 
   return (
-    <section ref={cbRef} className="relative overflow-hidden bg-white">
+    <section ref={cbRef} className="relative overflow-hidden bg-white" style={{ height: "100vh" }}>
       <ProgressBar sectionRefs={sectionsRef as React.RefObject<(HTMLElement | null)[]>} />
 
       {CHAPTERS.map((chapter, i) => {
