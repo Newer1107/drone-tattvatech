@@ -101,7 +101,7 @@ export function DroneDisassemblySection() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative h-[400px] lg:h-[550px]"
+            className="relative h-[400px] lg:h-[550px] overflow-hidden [isolation:isolate]"
           >
             <DroneViewer mouse={mouse} />
           </motion.div>

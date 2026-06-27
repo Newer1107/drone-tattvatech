@@ -97,7 +97,7 @@ export function Hero() {
       <Particles />
 
       {/* 3D Drone Scene */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
+      <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden [isolation:isolate]">
         <DroneCanvas mouse={mouse} />
       </div>
 

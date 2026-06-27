@@ -43,7 +43,7 @@ function DroneGhost() {
     entranceStarted: false,
     entranceProgress: 0,
     entranceDone: false,
-    entranceInitialized: false,
+    fadeOutProgress: 0,
   });
 
   useEffect(() => {
@@ -111,12 +111,31 @@ function DroneGhost() {
         });
 
         if (ep >= 1) {
-          s.entranceDone = true;
-          // Hand off opacity to the normal hero-gate system
-          s.opacity = 0.6;
+          s.entranceProgress = 1;
+          s.fadeOutProgress = 0;
         }
-        return; // Skip normal flight during entrance
+        return;
       }
+
+      // Fade-out after the spin completes
+      s.fadeOutProgress += dt * 1.2; // ~0.83s
+      const fp = Math.min(1, s.fadeOutProgress);
+      const fadeOpacity = Math.max(0, 1 - fp);
+      ref.current.children.forEach((child) => {
+        child.traverse((node) => {
+          if (node instanceof THREE.Mesh) {
+            const m = node.material as THREE.MeshStandardMaterial;
+            if (m) m.opacity = fadeOpacity;
+          }
+        });
+      });
+
+      if (fp >= 1) {
+        s.entranceDone = true;
+        // Hand off opacity to the normal hero-gate system (starts at 0)
+        s.opacity = 0;
+      }
+      return;
     }
 
     const docH = document.documentElement.scrollHeight - window.innerHeight;
@@ -254,7 +273,7 @@ if (typeof console !== "undefined") {
 
 export function PlayfulDrone() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-30">
+    <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden [isolation:isolate]">
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
         dpr={[1, 1.5]}
